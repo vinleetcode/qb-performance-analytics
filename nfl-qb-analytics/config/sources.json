@@ -1,0 +1,89 @@
+{
+  "_comment": "Source registry for the 1920-2025 historical QB dataset. Verified 2026-10-28 before any ingestion code was written, per the project's data-access policy: no scraping, no bypassing ToS/rate limits/paywalls.",
+  "sources": [
+    {
+      "source_id": "nflverse_player_stats",
+      "name": "nflverse player_stats (via nflreadpy)",
+      "description": "Season- and week-level player statistics compiled by the nflverse project from NFL play-by-play and official game data.",
+      "url": "https://github.com/nflverse/nflreadpy",
+      "access_method": "open_package_api",
+      "license_notes": "nflverse data is released for open community use (CC-BY style attribution expected); no scraping involved, accessed via the official nflreadpy Python package.",
+      "coverage_start_season": 1999,
+      "coverage_end_season": 2025,
+      "verified_on": "2026-10-28",
+      "verification_method": "Empirically called nflreadpy.load_player_stats(seasons=True) and confirmed season range 1999-2026 (2026 excluded as incomplete). Called load_schedules()/load_draft_picks()/load_combine() and confirmed none return data before 1999 (schedules: 1999+, draft_picks: 1980+ picks only, no stats; combine: 2000+), so nflreadpy cannot supply the 1920-1998 or 1960-1969 AFL requirement.",
+      "status": "ingested"
+    },
+    {
+      "source_id": "pfr_historical_1920_1998",
+      "name": "Pro Football Reference — historical player passing pages (1920-1998)",
+      "description": "The only comprehensive public source of complete player-season passing statistics for 1920-1998, including pre-merger AFL (1960-1969).",
+      "url": "https://www.sports-reference.com/data_use.html",
+      "access_method": "not_available_to_this_pipeline",
+      "license_notes": "Sports Reference's data-use policy (fetched and quoted 2026-10-28) explicitly prohibits automated access ('scripts, bots, scrapers, data miners... without express written permission') and prohibits building a database/archive that substitutes for their own data store. It states custom data requests require a minimum $5,000 payment and no free bulk/API access is offered. No authorized license or API credential for this data was available in this environment.",
+      "coverage_start_season": 1920,
+      "coverage_end_season": 1998,
+      "verified_on": "2026-10-28",
+      "verification_method": "Fetched https://www.sports-reference.com/data_use.html directly and reviewed the stated policy.",
+      "status": "not_ingested",
+      "status_reason": "No free, legitimately licensed bulk-access path found. Scraping would violate the publisher's explicit terms of use; this pipeline does not bypass access restrictions. Flagged as a gap rather than filled with invented or third-party re-scraped data of uncertain license.",
+      "implied_league_id": "NFL"
+    },
+    {
+      "source_id": "afl_historical_1960_1969",
+      "name": "Pre-merger American Football League (AFL) passing statistics, 1960-1969",
+      "description": "AFL passing statistics predating the 1970 NFL-AFL merger. The authoritative public compilation lives on the same Sports Reference / Pro Football Reference platform as the 1920-1998 NFL data.",
+      "url": "https://www.sports-reference.com/data_use.html",
+      "access_method": "not_available_to_this_pipeline",
+      "license_notes": "Same restriction as pfr_historical_1920_1998 — same publisher, same policy.",
+      "coverage_start_season": 1960,
+      "coverage_end_season": 1969,
+      "verified_on": "2026-10-28",
+      "verification_method": "Same as pfr_historical_1920_1998.",
+      "status": "not_ingested",
+      "status_reason": "Same as pfr_historical_1920_1998. Additionally flagged in schema as its own league_id ('AFL') so it is never silently merged with NFL baselines once/if it is obtained.",
+      "implied_league_id": "AFL"
+    },
+    {
+      "source_id": "zackthoutt_pfr_scrape_kaggle",
+      "name": "\"NFL Football Player Stats\" (zackthoutt/nfl-player-stats, mirrored on Kaggle as zynicide/nfl-football-player-stats)",
+      "description": "A third-party game-by-game player stats dump (players table + per-game stat table covering passing/rushing/receiving/returns/kicking/defense) claiming coverage from the 1940s through the scrape date. Evaluated on 2026-10-29 as a candidate for filling the 1920-1998 gap.",
+      "url": "https://github.com/zackthoutt/nfl-player-stats",
+      "access_method": "rejected_after_provenance_review",
+      "license_notes": "The GitHub repo (code) carries an MIT license, and the uploader separately marked the Kaggle mirror 'CC0: Public Domain' (confirmed via the page's embedded schema.org metadata). Neither covers the underlying data legitimately: the repo's own README states verbatim 'I decided to scrape pro-football-reference.com for all recorded NFL player data... I scraped every NFL player in their database going back to the 1940s,' scraped over 12/1/17-12/4/17. This is the same publisher whose data_use.html (see pfr_historical_1920_1998) explicitly prohibits automated bulk access and building a substitute data store without a paid license. A third party's CC0 self-declaration on data it scraped from a site whose terms forbid that scraping does not grant rights it doesn't hold, and does not constitute Sports Reference's own permission. Using this dataset would mean reconstructing the same restricted PFR bulk dataset at one remove -- exactly what this project's access policy rules out. Also stale/unmaintained: the README itself points users elsewhere ('gridironai.com') for an updated dataset.",
+      "coverage_start_season": 1940,
+      "coverage_end_season": 2017,
+      "verified_on": "2026-10-29",
+      "verification_method": "Fetched the GitHub repo's raw README.md and repo/license metadata via the GitHub API, and the Kaggle dataset page's embedded JSON-LD license field. Did not download the actual CSV/Kaggle payload (no Kaggle API credentials were available in this environment, and the provenance finding means the payload would not be ingested regardless). Schema/completeness assessment below is based on the documented schema and the author's own completeness caveat, not a row-level audit of the real files.",
+      "status": "not_ingested",
+      "status_reason": "Rejected on provenance/licensing grounds, not technical grounds -- the documented schema (per-game passing attempts/completions/yards/rating/TDs/INTs/sacks/sack-yards, with missing-game-number = did-not-play) looks structurally sufficient to aggregate into player-season passing records, and would also require reconciliation against the already-ingested 1999-2016 nflverse overlap. None of that matters because the data's origin is an unauthorized bulk scrape of pro-football-reference.com, which this project will not reconstruct via a third-party mirror any more than it would scrape directly. Also would not have covered 1920-1939 even if usable (repo claims 1940s onward only).",
+      "implied_league_id": "NFL"
+    },
+    {
+      "source_id": "nflverse_draft_picks",
+      "name": "nflverse draft_picks + players (via nflreadpy)",
+      "description": "NFL Draft records (round/pick/team/college/position) and player bio (height/weight/birthdate), compiled by the nflverse project. Used to build the raw draft board and the cleaned QB prospect table.",
+      "url": "https://github.com/nflverse/nflreadpy",
+      "access_method": "open_package_api",
+      "license_notes": "Same as nflverse_player_stats -- open community data, accessed via the official nflreadpy package, no scraping.",
+      "coverage_start_season": 2000,
+      "coverage_end_season": 2026,
+      "verified_on": "2026-10-30",
+      "verification_method": "Empirically called nflreadpy.load_draft_picks(seasons=range(2000,2027)) and load_players(); confirmed columns and that cfb_player_id is a sports-reference.com/cfb slug (e.g. 'chad-pennington-1'), not a CollegeFootballData numeric id.",
+      "status": "ingested"
+    },
+    {
+      "source_id": "cfbd_player_season_stats",
+      "name": "CollegeFootballData.com API -- player season stats, rosters, SP+ ratings",
+      "description": "Authenticated REST API providing college football player-season passing/rushing stats (/stats/player/season), team rosters for bio backfill (/roster), and team strength-of-schedule/SP+ ratings (/ratings/sp).",
+      "url": "https://api.collegefootballdata.com/",
+      "access_method": "authenticated_api_key_required",
+      "license_notes": "Requires a free (or Patreon-tier) API key sent as a bearer token; CFBD's terms prohibit circumventing auth/rate limits and prohibit obtaining multiple keys to evade the free-tier limit (1,000 calls/month). This pipeline respects that: one key, on-disk response caching so reruns make zero repeat calls, throttled + bounded-retry requests, and a season x category call pattern designed to stay a small fraction of the monthly budget (~88 calls for a full 2004-2025 backfill).",
+      "coverage_start_season": 2004,
+      "coverage_end_season": 2025,
+      "verified_on": "2026-10-30",
+      "verification_method": "Fetched the live OpenAPI spec at https://api.collegefootballdata.com/api-docs.json (public, no key required to read) and confirmed exact paths/params/response schemas for /stats/player/season, /player/search, /roster, and /ratings/sp. Did not call the authenticated data endpoints themselves without a configured key -- see results/prospect_coverage_report.json for whether real data was actually pulled in a given run.",
+      "status": "ingested"
+    }
+  ]
+}

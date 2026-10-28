@@ -1,0 +1,20 @@
+{
+  "_comment": "Reference metadata only (schedule LENGTH, a public structural fact) — not player statistics. Used to scale qualification thresholds across eras so a fixed 100-attempt cutoff isn't applied to a 10-game 1944 season or a 9-game 1982 strike season. Bands marked 'verified' were confirmed via web search on 2026-10-28; bands marked 'approximate_unverified' come from general football-history knowledge and were NOT independently re-verified this session — treat them as a reasonable starting point to refine before relying on them for anything but scaling thresholds.",
+  "nfl_apfa_bands": [
+    {"start": 1920, "end": 1920, "games_scheduled": null, "confidence": "approximate_unverified", "notes": "APFA founding season; no fixed league schedule, teams played irregular slates (roughly 6-13 games) against a mix of league and non-league opponents."},
+    {"start": 1921, "end": 1932, "games_scheduled": 12, "confidence": "approximate_unverified", "notes": "Early NFL; schedule length still varied by team (commonly 10-14 games), 12 used as an approximate midpoint."},
+    {"start": 1933, "end": 1942, "games_scheduled": 11, "confidence": "approximate_unverified", "notes": "League standardized around an 11-game schedule."},
+    {"start": 1943, "end": 1945, "games_scheduled": 10, "confidence": "approximate_unverified", "notes": "Wartime roster shortages shortened the schedule."},
+    {"start": 1946, "end": 1960, "games_scheduled": 12, "confidence": "approximate_unverified", "notes": "Post-war 12-game era."},
+    {"start": 1961, "end": 1977, "games_scheduled": 14, "confidence": "verified", "notes": "14-game regular season."},
+    {"start": 1978, "end": 1981, "games_scheduled": 16, "confidence": "verified", "notes": "Expanded to 16 games."},
+    {"start": 1982, "end": 1982, "games_scheduled": 9, "confidence": "verified", "notes": "Players' strike shortened the season to 9 games."},
+    {"start": 1983, "end": 1986, "games_scheduled": 16, "confidence": "verified"},
+    {"start": 1987, "end": 1987, "games_scheduled": 15, "confidence": "verified", "notes": "Players' strike shortened the season to 15 games."},
+    {"start": 1988, "end": 2020, "games_scheduled": 16, "confidence": "verified"},
+    {"start": 2021, "end": 2025, "games_scheduled": 17, "confidence": "verified", "notes": "Expanded to 17 games starting 2021."}
+  ],
+  "afl_bands": [
+    {"start": 1960, "end": 1969, "games_scheduled": 14, "confidence": "approximate_unverified", "notes": "Pre-merger AFL; not independently re-verified this session. Kept in its own league_id ('AFL') and never pooled with NFL baselines for the same years."}
+  ]
+}

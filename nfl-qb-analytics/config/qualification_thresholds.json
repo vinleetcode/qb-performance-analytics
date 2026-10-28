@@ -1,0 +1,16 @@
+{
+  "_comment": "Configurable qualification rule for leaderboard inclusion and baseline-era z-score eligibility. A single fixed attempt count (e.g. 100) is not meaningful across season lengths ranging from 9 to 17 games, so the default scales to each season's schedule length via config/season_calendar.json.",
+  "default_method": "per_game_rate",
+  "methods": {
+    "per_game_rate": {
+      "description": "NFL's own official passing-title qualification rule: 14 attempts per scheduled team game, rounded to the nearest whole attempt.",
+      "attempts_per_game": 14
+    },
+    "fixed": {
+      "description": "A flat attempt count regardless of season length. Provided as an alternative for sensitivity testing; not the default because it misrepresents short/strike seasons and pre-1978 schedules.",
+      "attempts": 100
+    }
+  },
+  "fallback_games_scheduled_if_unknown": 16,
+  "all_players_retained_regardless_of_qualification": true
+}

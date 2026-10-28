@@ -4,3 +4,6 @@ __pycache__/
 data/
 results/
 *.pyc
+.env
+.env.*
+!.env.example

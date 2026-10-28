@@ -5,7 +5,7 @@ import pandas as pd
 
 ROOT = Path(__file__).resolve().parents[1]
 DATA = ROOT / 'data'
-START, END = 2000, 2025  # Excludes incomplete 2026 season.
+START, END = 1999, 2025  # nflreadpy's earliest season is 1999; excludes incomplete 2026.
 REQUIRED = ['player_id', 'player_display_name', 'position', 'season', 'attempts',
             'passing_yards', 'passing_tds', 'passing_interceptions']
 
