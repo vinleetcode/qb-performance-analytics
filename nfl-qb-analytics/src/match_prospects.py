@@ -28,6 +28,10 @@ WHOLE_SCHOOL_ALIASES = {
     'mississippi': 'ole miss',  # nflverse: "Mississippi"; CFBD: "Ole Miss"
     'north carolina state': 'nc state',  # nflverse: "North Carolina St."; CFBD: "NC State"
     'central florida': 'ucf',  # nflverse: "Central Florida"; CFBD: "UCF"
+    # Added 2026-11-09 after checking CFBD's own team names in /games (Phase 3):
+    'boston col': 'boston college',  # nflverse: "Boston Col."; CFBD: "Boston College"
+    'connecticut': 'uconn',  # nflverse: "Connecticut"; CFBD: "UConn"
+    'texas-el paso': 'utep',  # nflverse: "Texas-El Paso"; CFBD: "UTEP"
 }
 
 
@@ -136,3 +140,53 @@ def match_prospect_to_cfb(prospect_name: str, college_field: str, draft_year: in
 
 def normalize_name_matches(a: str, b: str) -> bool:
     return normalize_name(a) == b
+
+
+STABLE_ID_NAME_MIN_SIMILARITY = 0.6
+MATCHED_METHODS = ('exact_name_school', 'fuzzy_name_school', 'cfbd_draft_athlete_id')
+
+
+def _plausibly_same_person(prospect_name: str, cfb_name: str | None) -> bool:
+    """Sanity gate for an id-based bridge: the CFBD record at (year, overall pick)
+    must plausibly be the same person -- same last name, or overall similarity
+    >= STABLE_ID_NAME_MIN_SIMILARITY (lets 'Cam'/'Cameron' through, blocks a
+    pick-numbering mismatch that points at a different player)."""
+    a, b = normalize_name(prospect_name), normalize_name(cfb_name or '')
+    if not a or not b:
+        return False
+    if a.split()[-1] == b.split()[-1]:
+        return True
+    return SequenceMatcher(None, a, b).ratio() >= STABLE_ID_NAME_MIN_SIMILARITY
+
+
+def reconcile_with_cfbd_draft_id(prospect_name: str, name_result: MatchResult, stable_athlete_id: str | None,
+                                 stable_cfb_player_id: int | None, stable_display_name: str | None) -> MatchResult:
+    """Combines the name/school match with CFBD's own draft-pick collegeAthleteId
+    for the same (draft year, overall pick):
+      - agreement            -> keep the name match, note the confirmation;
+      - name match failed    -> accept the id bridge (method 'cfbd_draft_athlete_id')
+                                if the names are plausibly the same person;
+      - disagreement         -> 'ambiguous' (never silently pick one side).
+    """
+    if not stable_athlete_id:
+        return name_result
+    if stable_cfb_player_id is None:
+        note = f'cfbd_draft_athlete_id={stable_athlete_id} has no CFBD season-stat rows'
+        return MatchResult(name_result.cfb_player_id, name_result.method, name_result.confidence,
+                           '; '.join(n for n in (name_result.notes, note) if n))
+    plausible = _plausibly_same_person(prospect_name, stable_display_name)
+    if name_result.cfb_player_id == stable_cfb_player_id:
+        return MatchResult(name_result.cfb_player_id, name_result.method, name_result.confidence,
+                           '; '.join(n for n in (name_result.notes, 'confirmed by cfbd_draft_athlete_id') if n))
+    if name_result.cfb_player_id is None:
+        if plausible:
+            return MatchResult(stable_cfb_player_id, 'cfbd_draft_athlete_id', None,
+                               f'id bridge via CFBD /draft/picks (year, overall); name/school result was '
+                               f'{name_result.method}')
+        return MatchResult(None, name_result.method, name_result.confidence,
+                           '; '.join(n for n in (name_result.notes,
+                                                 f'cfbd draft id candidate {stable_athlete_id} rejected: name mismatch '
+                                                 f'({stable_display_name!r})') if n))
+    return MatchResult(None, 'ambiguous', None,
+                       f'conflict: name/school match cfb_player_id={name_result.cfb_player_id} vs CFBD draft '
+                       f'athlete id -> cfb_player_id={stable_cfb_player_id}')

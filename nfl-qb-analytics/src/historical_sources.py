@@ -49,4 +49,8 @@ def not_ingested_season_ranges() -> list[dict]:
     """Returns the registry entries that could not be ingested, each with its
     season range, league implication, and reason -- used to build the
     coverage report's explicit 'missing coverage' section."""
-    return [s for s in load_source_registry() if s['status'] == 'not_ingested']
+    # Only NFL player-season stat gaps belong in the NFL season-coverage report;
+    # Phase-3 entries tagged coverage_scope='prospect_features' (pro days, college
+    # injuries) are documented in reports/advanced_features_coverage.md instead.
+    return [s for s in load_source_registry() if s['status'] == 'not_ingested'
+            and s.get('coverage_scope', 'nfl_player_seasons') == 'nfl_player_seasons']

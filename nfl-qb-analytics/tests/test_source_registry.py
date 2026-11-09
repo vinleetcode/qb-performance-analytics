@@ -25,7 +25,20 @@ def test_every_source_has_required_fields():
 
 KNOWN_LEGITIMATE_INGESTED_SOURCES = {
     NFLVERSE_SOURCE_ID, 'nflverse_draft_picks', 'cfbd_player_season_stats',
+    # Phase 3 (2026-11-09): same two access paths already reviewed above -- the
+    # official nflreadpy package and the authenticated CFBD public API.
+    'nflverse_combine', 'nflverse_schedules',
+    'cfbd_games', 'cfbd_game_player_passing', 'cfbd_team_season_stats', 'cfbd_team_talent', 'cfbd_recruiting',
+    'cfbd_player_receiving', 'cfbd_returning_production', 'cfbd_draft_picks',
+    # Offensive-scheme phase (2026-11-09): manual review log, Wikipedia via the official API, CFBD /plays.
+    'manual_scheme_research', 'wikipedia_team_season_infobox', 'cfbd_plays',
 }
+
+
+def test_phase3_unavailable_sources_are_documented_not_ingested():
+    entries = {e['source_id']: e for e in load_source_registry()}
+    for sid in ('pro_day_measurements', 'college_injury_availability'):
+        assert entries[sid]['status'] == 'not_ingested' and entries[sid]['status_reason']
 
 
 def test_only_known_legitimate_sources_are_marked_ingested():

@@ -2,6 +2,21 @@
 
 An end-to-end, statistically grounded NFL player analytics starter. Designed for data science and applied statistics internship portfolios.
 
+**Project goal (Phases 2-3):** a reproducible, leakage-audited CFB-to-NFL quarterback dataset for
+predicting the NFL success of drafted college QBs from college performance, opponent-adjusted
+efficiency, development trajectory, age, offensive environment, supporting cast, team talent and
+the NFL Combine, with NFL career targets, survival records, prospect comparables and draft-value
+structures. The phases build on each other, and none of them modifies the data of an earlier phase.
+
+| Phase | What it adds | Entry point |
+|---|---|---|
+| MVP | 2000-2025 QB seasons, next-season YPA baseline model | `python -m src.pipeline`, `python -m src.model` |
+| 1 | All-time NFL QB database (1999-2025 ingested; earlier gaps documented) | `python -m src.historical_pipeline` |
+| 2 | NFL draft board + CFBD college stats + identity matching | `python -m src.prospect_pipeline` |
+| 3 | Advanced college features, environment, combine, NFL targets, survival, similarity, draft-value prep | `python -m src.advanced_pipeline` |
+
+Phase 3 coverage, validation and limitations: **[`reports/advanced_features_coverage.md`](reports/advanced_features_coverage.md)**.
+
 ## Scope (MVP)
 1. Fetch **completed regular seasons 2000–2025** using `nflreadpy`.
 2. Calculate passing efficiency (`YPA`, touchdown rate, interception rate) and within-season, attempt-weighted z-scores.
@@ -307,7 +322,10 @@ lands on the most immediately useful data first.
 - **189 of 328 QB prospects matched to real college stats** (0 ambiguous -- every tie was
   either resolved unambiguously or left `unmatched`, never guessed). 139 unmatched; **130 of
   those are 2000-2009 draft classes whose college careers predate CFBD's 2004 coverage start**
-  (structural, expected). Spot-checked matches after fixing three real issues found during
+  (structural, expected). **[Corrected in Phase 3:** that explanation is only right for the
+  2000-2004 classes. The 2005-2009 misses were caused by CFBD's `/stats/player/season`
+  being nearly empty for 2004-2008 seasons. Phase 3 recovers them from per-game box
+  scores (see "Phase 3" below).**]** Spot-checked matches after fixing three real issues found during
   this run (below): Blake Bortles/UCF, David Fales/San José State, Jacoby Brissett &
   Ryan Finley/NC State, Matt Corral/Ole Miss -- all `exact_name_school`.
 - Table row counts: `nfl_draft_picks_raw` 6,901, `qb_draft_prospects` 328, `cfb_players`
@@ -361,3 +379,102 @@ pytest -q
   own pre-computed versions of stats this project already derives itself in `src/metrics.py`
   (intentionally not duplicated); `rushing:LONG` (longest rush) isn't tracked by this project.
 - No frontend and no predictive model were built, per this phase's explicit instruction.
+
+---
+
+## Phase 3: advanced CFB-to-NFL features, outcomes and modelling preparation
+
+Adds everything a later modelling phase needs: opponent-adjusted college performance,
+development trajectories, age and experience, offensive environment and supporting cast,
+team talent, NFL Combine athleticism, NFL career targets, survival records, historical comparables,
+draft-value structures, and evaluation and explainability utilities. **No final predictive
+model is trained in this phase, and no accuracy is claimed.** Coaching features are explicitly out of scope.
+
+Full coverage, missingness, validation results and the list of incomplete features with reasons:
+**[`reports/advanced_features_coverage.md`](reports/advanced_features_coverage.md)**. Charts are in `reports/figures/`.
+
+### Run
+```bash
+python -m src.ingest_cfbd_advanced 750   # optional: warm the CFBD cache (hard per-run call cap)
+python -m src.advanced_pipeline          # idempotent; 0 CFBD calls once cached
+python -m src.eda_prospects              # descriptive charts -> reports/figures/
+pytest -q --junitxml=results/junit.xml
+python -m src.advanced_report            # renders reports/advanced_features_coverage.md from the run artifacts
+```
+
+### Architecture (new modules)
+| Layer | Where | Notes |
+|---|---|---|
+| Raw / standardized sources | `src/ingest_cfbd_advanced.py` -> `cfb_games`, `cfb_game_passing`, `cfb_game_rushing`, `cfb_team_season_stats`, `cfb_recruits`, `cfb_receiving_seasons`, `cfbd_draft_picks`, `nfl_combine_measurements`, `cfb_offensive_scheme_labels` | Every endpoint checked against the live OpenAPI spec and probed before use; sources registered in `config/sources.json` |
+| Derived team-season context | `src/features/environment.py` -> `cfb_team_season_environment`, `cfb_team_roster_talent` | Scheme profile, OL proxies, receiver context, talent (within-season percentiles) |
+| Joined player-level | `src/features/opponent_adjust.py`, `development.py` -> `prospect_college_seasons`; `targets.py` -> `nfl_prospect_seasons` | One row per prospect x college season / NFL season |
+| Model-ready features | `src/features/registry.py` -> `feature_definitions` (119 features, version `3.0.0`), `prospect_feature_values` (long form, each value dated) | Exports: `data/model_ready/features_<scope>.parquet` |
+| Targets / outcomes | `nfl_career_outcomes`, `survival_records`, `draft_value_predictions` (empty until models exist), `prospect_similarity` | Exports: `nfl_targets`, `survival_records`, `draft_value_base`, `prospect_similarity` |
+| Modelling prep | `src/modeling/`: `preprocess` (chronological splits, train-only preprocessing), `evaluation` (Brier, log loss, ROC-AUC, calibration, ECE, bootstrap / cluster-bootstrap CIs, conformal and bootstrap prediction intervals, incremental value vs a baseline), `explain` (permutation importance, optional SHAP, correlations, PDP, residuals), `similarity` (KNN comps, PCA, k-means), `survival` (Kaplan-Meier, lifelines / scikit-survival adapters, Cox readiness) | `lifelines`, `shap` and `scikit-survival` are optional and not required |
+
+### Leakage controls
+- **Model scopes** (`registry.py`): `pre_draft_college` < `pre_draft_full` (+ combine) < `pre_draft_scouting`
+  (+ expert pre-draft grades) < `post_draft` (+ draft round / pick). Draft slot exists *only* in `post_draft`.
+  Outcome columns can never be features (`assert_scope_safe`).
+- **Every stored value carries `available_as_of`:**
+  - college features: the date of the final college game (bowls included)
+  - combine: March 15 of the draft year
+  - draft slot: draft day
+  - draft dates: `config/nfl_draft_dates.json`
+
+  The audit found **0 of 26,885 pre-draft values knowable on or after draft day**.
+- **Chronological splits by draft class** (`config/modeling_splits.json`): train 2005-2015, validation
+  2016-2018, test 2019-2021. 2022-2026 is a censored holdout. Preprocessing refuses to fit on non-train rows.
+- **Comparables** use only earlier draft classes, with scaling fit on that earlier pool.
+- **Post-draft listings excluded:** NFL-roster heights and weights (a post-draft listing) are not used as pre-draft features.
+
+### Headline results (2026-11-09 run; details in the report)
+- 328 drafted QBs (2000-2026). Linked to college data: **252 of 260** in the 2005+ modelling universe (Phase 2: 189).
+  - **Finding:** CFBD season stats are nearly empty for 2004-2008, so those seasons were rebuilt from box scores.
+  - **Stable-ID check:** CFBD's draft-pick athlete id confirmed 185 name matches, with 0 conflicts.
+- **Opponent adjustment:** leave-one-out opponent pass-defense baselines from 67,018 box-score lines; 678 of 679 prospect-seasons with 100+ attempts are adjusted.
+- **Combine:** records for 293 QBs. Skipped drills stay NULL, with participation indicators.
+- **Targets:** started 16+ in 5 seasons has 122 / 38 / 33 model-ready rows (train / validation / test). Window targets are NULL for unfinished windows.
+- **Survival:** 4 event definitions. Career ends are *inferred* (2 absent seasons); nflverse has no usable official retirement flag (Brady is listed `ACT`).
+- **Not populated, and documented why:**
+  - college injury history
+  - pro-day results
+  - qualitative scheme labels (none documented, none invented)
+  - verified college starts (a proxy is provided)
+- **Preserved:** existing NFL tables are unchanged (verified before and after every run). Two consecutive runs gave identical row counts and byte-identical feature values.
+- Tests: 133 passed, 0 failed, 13 skipped. The skips are the pre-existing live-network tests, skipped during a GitHub release-download outage (HTTP 504) on 2026-11-09.
+- CFBD budget: about 644 of the free tier's 1,000 calls for November 2026. Every response is cached, and reruns make 0 calls.
+
+### Notes on changes to earlier phases
+- `src/prospect_pipeline.run_matching` now also consults CFBD's draft-pick athlete id (no-op when
+  `cfbd_draft_picks` is empty). Three verified school aliases were added to `match_prospects.py`, which
+  raised Phase-2 matches from 189 to 192.
+- `src/cfbd_client.py` gained an optional hard per-run call budget (`max_network_calls`).
+- `historical_sources.not_ingested_season_ranges` ignores Phase-3 entries tagged
+  `coverage_scope: prospect_features`, so the Phase-1 NFL season-coverage report is unchanged.
+- A pre-Phase-3 copy of the database is in `data/backups/` (gitignored).
+
+---
+
+## Offensive-scheme database (college offensive environment)
+
+Historically grounded scheme features for testing whether a QB's college offensive environment
+improves NFL career predictions. Coverage, provenance, citations and limits:
+**[`reports/offensive_scheme_coverage.md`](reports/offensive_scheme_coverage.md)**.
+
+Three evidence tiers are kept apart and never merged:
+
+| Tier | Source | Status | Features |
+|---|---|---|---|
+| Verified | Manual review: a source that was read explicitly ties the label to that team **and** season (`config/offensive_scheme_labels.csv`, with URL, title, date and verbatim quote) | `verified` | `scheme_ver_*` |
+| Reported | Wikipedia team-season infobox `off_scheme`, read through the official MediaWiki API and pinned to revision permalinks | `reported`, low confidence | `scheme_rep_*` |
+| Quantitative | Box scores and CFBD play-by-play: standard-down and passing-down pass rates, tempo, efficiency | statistics, never labels | `scheme_q_*`, `env_*` |
+
+- **Taxonomy** (`config/offensive_scheme_taxonomy.json`): offensive family, run concepts, passing concepts, formation and tempo. Labels overlap, and ambiguous source text stays unmapped.
+- **Verified sample:** manual research used a seeded random sample of final college seasons stratified by draft class, so that "has a verified label" is not a proxy for draft position. 24 team-seasons were researched and 5 have verified labels. The rest of the log records insufficient, conflicting or unavailable sources.
+- **Coverage:** 70.8% of the 2005+ modelling universe has at least one usable scheme feature. 61.9% has a reported final-season family; 42.3% has final-season play-by-play.
+- **Play-by-play:** 2016-2025 (162 CFBD calls, 808 of 1,000 used in November 2026). 2004-2015 (about 200 calls) is deferred to the next quota so the free tier is not exceeded:
+  `python -c "from src import ingest_cfbd_plays as P; from src.cfbd_client import CFBDClient; print(P.fetch_plays(P.SEASONS_LATER, CFBDClient(max_network_calls=220)))"`
+- **Not used:** the suggested `deepmetricanalytics.com` scheme page is a 2026 preview with no per-team citations, so it covers none of these seasons.
+- **Outputs:** `data/processed/college_offensive_schemes.parquet`, `qb_scheme_features.parquet`, `qb_scheme_seasons.parquet` and `offensive_scheme_labels_all.parquet`. In the database: `cfb_offensive_scheme_labels` and `cfb_team_season_schemes`. Feature version `3.1.0` in `prospect_feature_values`.
+- **Run:** `python -m src.advanced_pipeline` (the scheme step is part of it), then `pytest --junitxml=results/junit.xml`, then `python -m src.scheme_report`.

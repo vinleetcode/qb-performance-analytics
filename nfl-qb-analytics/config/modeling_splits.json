@@ -1,0 +1,17 @@
+{
+  "_comment": "Chronological train/validation/test assignment by DRAFT CLASS. Never random: a random split would let a model learn from later draft classes when scoring earlier ones. Preprocessing (imputation, scaling, PCA) must be fit on the train split only -- enforced by src/modeling/preprocess.py.",
+  "split_version": "1.0.0",
+  "observation_end_season": 2025,
+  "college_feature_floor_draft_year": 2005,
+  "splits": {
+    "train": [2005, 2015],
+    "validation": [2016, 2018],
+    "test": [2019, 2021]
+  },
+  "censored_holdout": [2022, 2026],
+  "notes": [
+    "2005 is the first draft class whose final college season (2004) is inside CFBD coverage; 2000-2004 classes stay in outcome/EDA tables but are excluded from college-feature models.",
+    "2021 is the last class with a fully observed five-season window (2021-2025) given observation_end_season=2025.",
+    "2022-2026 classes have incomplete windows: their five-year targets are NULL (right-censored), not failures. They remain usable for survival models and for scoring."
+  ]
+}

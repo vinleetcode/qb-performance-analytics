@@ -97,3 +97,10 @@ def test_no_candidates_at_all_is_unmatched_not_an_error():
     result = match_prospect_to_cfb('Nobody Here', 'Nowhere State', 2024, [])
     assert result.method == 'unmatched'
     assert result.cfb_player_id is None
+
+
+def test_phase3_verified_school_aliases():
+    from src.match_prospects import normalize_school
+    assert normalize_school('Boston Col.') == normalize_school('Boston College')
+    assert normalize_school('Connecticut') == normalize_school('UConn')
+    assert normalize_school('Texas-El Paso') == normalize_school('UTEP')

@@ -1,0 +1,47 @@
+{
+  "_comment": "Controlled vocabulary for college offensive-scheme labels. Labels are NOT mutually exclusive: a team-season can carry several families (e.g. 'Pro spread' -> spread + pro_style) and labels in several dimensions. Raw source strings are mapped only through raw_text_map; anything not listed stays unmapped and the team-season stays 'unknown' for that source. Statistical profiles never create labels.",
+  "taxonomy_version": "1.0.0",
+  "dimensions": {
+    "offensive_family": ["air_raid", "spread", "spread_option", "pro_style", "multiple_hybrid", "veer_and_shoot", "run_and_shoot", "flexbone_option"],
+    "run_concepts": ["zone_read", "power_gap", "rpo"],
+    "passing_concepts": ["west_coast", "air_coryell"],
+    "formation_tendency": ["pistol", "shotgun_heavy", "wildcat"],
+    "tempo": ["up_tempo_no_huddle"]
+  },
+  "spread_family": ["air_raid", "spread", "spread_option", "veer_and_shoot", "run_and_shoot"],
+  "raw_text_map": {
+    "spread": [["offensive_family", "spread"]],
+    "multiple": [["offensive_family", "multiple_hybrid"]],
+    "pro-style": [["offensive_family", "pro_style"]],
+    "pro set": [["offensive_family", "pro_style"]],
+    "pro-style/single back": [["offensive_family", "pro_style"]],
+    "multiple pro-style": [["offensive_family", "pro_style"], ["offensive_family", "multiple_hybrid"]],
+    "pro-style, multiple, two-back": [["offensive_family", "pro_style"], ["offensive_family", "multiple_hybrid"]],
+    "air raid": [["offensive_family", "air_raid"]],
+    "dirt raid": [["offensive_family", "air_raid"]],
+    "bear raid": [["offensive_family", "air_raid"]],
+    "spread, air raid": [["offensive_family", "spread"], ["offensive_family", "air_raid"]],
+    "spread / air raid": [["offensive_family", "spread"], ["offensive_family", "air_raid"]],
+    "pro spread": [["offensive_family", "spread"], ["offensive_family", "pro_style"]],
+    "multiple spread": [["offensive_family", "spread"], ["offensive_family", "multiple_hybrid"]],
+    "power spread": [["offensive_family", "spread"], ["run_concepts", "power_gap"]],
+    "west coast spread": [["offensive_family", "spread"], ["passing_concepts", "west_coast"]],
+    "up-tempo spread": [["offensive_family", "spread"], ["tempo", "up_tempo_no_huddle"]],
+    "hurry-up spread": [["offensive_family", "spread"], ["tempo", "up_tempo_no_huddle"]],
+    "hurry-up, no-huddle spread": [["offensive_family", "spread"], ["tempo", "up_tempo_no_huddle"]],
+    "spread option": [["offensive_family", "spread_option"]],
+    "no-huddle spread option": [["offensive_family", "spread_option"], ["tempo", "up_tempo_no_huddle"]],
+    "veer and shoot": [["offensive_family", "veer_and_shoot"]],
+    "run and shoot": [["offensive_family", "run_and_shoot"]],
+    "run and shoot/air raid": [["offensive_family", "run_and_shoot"], ["offensive_family", "air_raid"]],
+    "pistol": [["formation_tendency", "pistol"]],
+    "west coast": [["passing_concepts", "west_coast"]],
+    "air coryell": [["passing_concepts", "air_coryell"]],
+    "multiple, wildcat": [["offensive_family", "multiple_hybrid"], ["formation_tendency", "wildcat"]]
+  },
+  "deliberately_unmapped": {
+    "gulf coast": "Not a standard scheme name; meaning not documented on the page.",
+    "run and gun": "Colloquial; could mean several different systems.",
+    "play action/read": "Describes concepts, not a system; too ambiguous to map."
+  }
+}

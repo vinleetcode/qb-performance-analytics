@@ -21,11 +21,11 @@ import numpy as np
 import pandas as pd
 from sqlalchemy.orm import Session
 
-from src import ingest_cfbd, ingest_draft, match_prospects, metrics
+from src import ingest_cfbd, ingest_cfbd_advanced, ingest_draft, match_prospects, metrics
 from src.cfbd_client import CFBDClient, CFBDRequestError
 from src.config import cfbd_api_key_configured
 from src.db.schema import (
-    CfbPlayer, CfbPlayerSeason, CfbPlayerSeasonDerived, CfbTeamSeasonContext,
+    CfbdDraftPick, CfbPlayer, CfbPlayerSeason, CfbPlayerSeasonDerived, CfbTeamSeasonContext,
     CollegeNflPlayerMap, NflDraftPickRaw, Player, QbDraftProspect,
     get_engine, get_session, init_db,
 )
@@ -237,6 +237,13 @@ def run_matching(session: Session) -> None:
     nfl_players_by_gsis = {p.source_player_id: p.id for p in
                             session.query(Player).filter(Player.source_id == 'nflverse_player_stats').all()}
 
+    # Phase 3: CFBD's own draft record gives a stable collegeAthleteId per
+    # (year, overall pick). Empty table (e.g. Phase-2-only runs) => no change.
+    stable_athlete_by_pick = {(r.year, r.overall): r.college_athlete_id
+                              for r in session.query(CfbdDraftPick).all() if r.college_athlete_id}
+    cfb_by_cfbd_id = {p.cfbd_player_id: (p.id, p.display_name) for p in
+                      session.query(CfbPlayer).filter(CfbPlayer.source_id == CFBD_SOURCE_ID).all()}
+
     prospects = session.query(QbDraftProspect).all()
     for prospect in prospects:
         existing_map = session.query(CollegeNflPlayerMap).filter(
@@ -255,8 +262,14 @@ def run_matching(session: Session) -> None:
 
         result = match_prospects.match_prospect_to_cfb(
             prospect.player_name, prospect.college, prospect.draft_year, candidates)
+        stable_id = stable_athlete_by_pick.get((prospect.draft_year, prospect.pick))
+        stable_id = ingest_cfbd_advanced.id_str(stable_id)
+        stable_cfb = cfb_by_cfbd_id.get(stable_id) if stable_id else None
+        result = match_prospects.reconcile_with_cfbd_draft_id(
+            prospect.player_name, result, stable_id,
+            stable_cfb[0] if stable_cfb else None, stable_cfb[1] if stable_cfb else None)
 
-        status = 'matched' if result.method in ('exact_name_school', 'fuzzy_name_school') else (
+        status = 'matched' if result.method in match_prospects.MATCHED_METHODS else (
             'ambiguous' if result.method == 'ambiguous' else 'unmatched')
 
         session.add(CollegeNflPlayerMap(

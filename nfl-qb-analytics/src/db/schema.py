@@ -367,6 +367,596 @@ class CollegeNflPlayerMap(Base):
     __table_args__ = (UniqueConstraint('qb_draft_prospect_id', name='uq_map_prospect'),)
 
 
+# ==========================================================================
+# Phase 3 -- advanced college context, athletic profile, NFL outcomes and
+# modelling-preparation tables. NEW tables only; nothing above is altered.
+#
+# Layering (see README "Phase 3"):
+#   raw/standardized source rows : cfb_games, cfb_game_passing, cfb_team_season_stats,
+#                                  cfb_recruits, cfb_receiving_seasons, cfbd_draft_picks,
+#                                  nfl_combine_measurements, cfb_offensive_scheme_labels
+#   derived team-season context  : cfb_team_roster_talent, cfb_team_season_environment
+#   joined player-level          : prospect_college_seasons, nfl_prospect_seasons
+#   model-ready features         : feature_definitions, prospect_feature_values,
+#                                  prospect_similarity
+#   outcome / target tables      : nfl_career_outcomes, survival_records,
+#                                  draft_value_predictions
+# ==========================================================================
+
+
+class CfbGame(Base):
+    """One row per CFBD game (schedule + final score). Used for team schedules,
+    games-scheduled denominators, and season end dates (feature availability)."""
+    __tablename__ = 'cfb_games'
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    source_id = Column(String, ForeignKey('sources.source_id'), nullable=False)
+    game_id = Column(Integer, nullable=False)
+    season = Column(Integer, nullable=False)
+    week = Column(Integer)
+    season_type = Column(String)
+    start_date = Column(String)  # ISO-8601 UTC as returned by CFBD
+    completed = Column(Boolean)
+    neutral_site = Column(Boolean)
+    conference_game = Column(Boolean)
+    home_team = Column(String)
+    home_conference = Column(String)
+    home_classification = Column(String)
+    home_points = Column(Integer)
+    away_team = Column(String)
+    away_conference = Column(String)
+    away_classification = Column(String)
+    away_points = Column(Integer)
+    __table_args__ = (UniqueConstraint('game_id', 'source_id', name='uq_cfb_game'),)
+
+
+class CfbGamePassing(Base):
+    """Per-game passing box-score line (raw). `athlete_key` is the CFBD athlete id,
+    or 'TEAM:<name>' for team pseudo-rows, which count against the defense but are
+    never attributed to a quarterback (cfbd_player_id stays null)."""
+    __tablename__ = 'cfb_game_passing'
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    source_id = Column(String, ForeignKey('sources.source_id'), nullable=False)
+    game_id = Column(Integer, nullable=False)
+    season = Column(Integer, nullable=False)
+    week = Column(Integer)
+    season_type = Column(String)
+    team = Column(String, nullable=False)
+    conference = Column(String)
+    home_away = Column(String)
+    opponent = Column(String)
+    opponent_conference = Column(String)
+    athlete_key = Column(String, nullable=False)
+    cfbd_player_id = Column(String)
+    player_name = Column(String)
+    completions = Column(Integer)
+    attempts = Column(Integer)
+    passing_yards = Column(Integer)
+    passing_tds = Column(Integer)
+    interceptions = Column(Integer)
+    __table_args__ = (UniqueConstraint('game_id', 'team', 'athlete_key', 'source_id', name='uq_cfb_game_passing'),)
+
+
+class CfbGameRushing(Base):
+    """Per-game rushing box-score line (raw), fetched only for seasons where
+    CFBD's season-level player stats are incomplete (2004-2008), so QB rushing
+    can be reconstructed there instead of being left silently null."""
+    __tablename__ = 'cfb_game_rushing'
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    source_id = Column(String, ForeignKey('sources.source_id'), nullable=False)
+    game_id = Column(Integer, nullable=False)
+    season = Column(Integer, nullable=False)
+    week = Column(Integer)
+    season_type = Column(String)
+    team = Column(String, nullable=False)
+    opponent = Column(String)
+    cfbd_player_id = Column(String, nullable=False)
+    player_name = Column(String)
+    carries = Column(Integer)
+    rushing_yards = Column(Integer)
+    rushing_tds = Column(Integer)
+    __table_args__ = (UniqueConstraint('game_id', 'team', 'cfbd_player_id', 'source_id', name='uq_cfb_game_rushing'),)
+
+
+class CfbTeamSeasonStats(Base):
+    """Team-season box totals (/stats/season) + advanced play-by-play metrics
+    (/stats/season/advanced). Advanced columns are only trustworthy when
+    play-by-play coverage is near-complete -- see `pbp_coverage_ratio` and
+    `advanced_reliable` (gate applied in src/features/environment.py)."""
+    __tablename__ = 'cfb_team_season_stats'
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    source_id = Column(String, ForeignKey('sources.source_id'), nullable=False)
+    season = Column(Integer, nullable=False)
+    team = Column(String, nullable=False)
+    conference = Column(String)
+    games = Column(Integer)
+    pass_attempts = Column(Float)
+    pass_completions = Column(Float)
+    net_passing_yards = Column(Float)
+    passing_tds = Column(Float)
+    interceptions_thrown = Column(Float)
+    rushing_attempts = Column(Float)
+    rushing_yards = Column(Float)
+    rushing_tds = Column(Float)
+    total_yards = Column(Float)
+    possession_seconds = Column(Float)
+    def_sacks = Column(Float)
+    sacks_allowed = Column(Float)
+    def_tfl = Column(Float)
+    tfl_allowed = Column(Float)
+    opp_pass_attempts = Column(Float)
+    opp_pass_completions = Column(Float)
+    opp_net_passing_yards = Column(Float)
+    opp_passing_tds = Column(Float)
+    def_interceptions = Column(Float)
+    opp_rushing_attempts = Column(Float)
+    opp_rushing_yards = Column(Float)
+    off_plays = Column(Float)
+    off_ppa = Column(Float)
+    off_success_rate = Column(Float)
+    off_explosiveness = Column(Float)
+    off_power_success = Column(Float)
+    off_stuff_rate = Column(Float)
+    off_line_yards = Column(Float)
+    off_havoc_allowed = Column(Float)
+    off_front7_havoc_allowed = Column(Float)
+    off_passing_play_rate = Column(Float)
+    off_passing_ppa = Column(Float)
+    off_passing_success_rate = Column(Float)
+    off_rushing_play_rate = Column(Float)
+    off_rushing_ppa = Column(Float)
+    off_passing_downs_rate = Column(Float)
+    def_plays = Column(Float)
+    def_ppa = Column(Float)
+    def_success_rate = Column(Float)
+    def_passing_ppa = Column(Float)
+    def_passing_success_rate = Column(Float)
+    def_havoc = Column(Float)
+    pbp_coverage_ratio = Column(Float)  # advanced off_plays / box-score (pass att + rush att)
+    advanced_reliable = Column(Boolean, nullable=False, default=False)
+    __table_args__ = (UniqueConstraint('season', 'team', 'source_id', name='uq_cfb_team_season_stats'),)
+
+
+class CfbRecruit(Base):
+    """Individual high-school recruit (247Sports composite via CFBD). `athlete_id`
+    is CFBD's college athlete id when CFBD has linked it (same id space as
+    cfb_players.cfbd_player_id), otherwise null -- never guessed by name."""
+    __tablename__ = 'cfb_recruits'
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    source_id = Column(String, ForeignKey('sources.source_id'), nullable=False)
+    recruit_id = Column(String, nullable=False)
+    athlete_id = Column(String)
+    recruit_type = Column(String)
+    class_year = Column(Integer, nullable=False)
+    name = Column(String)
+    committed_to = Column(String)
+    position = Column(String)
+    stars = Column(Integer)
+    rating = Column(Float)
+    national_ranking = Column(Integer)
+    __table_args__ = (UniqueConstraint('recruit_id', 'source_id', name='uq_cfb_recruit'),)
+
+
+class CfbReceivingSeason(Base):
+    """Player-season receiving totals (raw), used ONLY to describe how a team's
+    receiving production is distributed (concentration) and to identify top
+    targets for exogenous talent lookups -- never as a stand-in for QB ability."""
+    __tablename__ = 'cfb_receiving_seasons'
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    source_id = Column(String, ForeignKey('sources.source_id'), nullable=False)
+    season = Column(Integer, nullable=False)
+    cfbd_player_id = Column(String, nullable=False)
+    player_name = Column(String)
+    position = Column(String)
+    team = Column(String, nullable=False)
+    conference = Column(String)
+    receptions = Column(Float)
+    receiving_yards = Column(Float)
+    receiving_tds = Column(Float)
+    __table_args__ = (UniqueConstraint('season', 'cfbd_player_id', 'team', 'source_id', name='uq_cfb_receiving'),)
+
+
+class CfbdDraftPick(Base):
+    """CFBD's own NFL-draft record (raw). Its `college_athlete_id` is a stable
+    CFBD id, so (year, overall) gives an id-based bridge from the nflverse draft
+    board to cfb_players that does not depend on name spelling. Pre-draft
+    rankings/grades are expert evaluations: legitimately pre-draft, but kept out
+    of the college-only feature set (see feature registry group 'scouting')."""
+    __tablename__ = 'cfbd_draft_picks'
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    source_id = Column(String, ForeignKey('sources.source_id'), nullable=False)
+    year = Column(Integer, nullable=False)
+    overall = Column(Integer, nullable=False)
+    round = Column(Integer)
+    pick = Column(Integer)
+    name = Column(String)
+    position = Column(String)
+    college_athlete_id = Column(String)
+    nfl_athlete_id = Column(String)
+    college_team = Column(String)
+    college_conference = Column(String)
+    nfl_team = Column(String)
+    height = Column(Float)
+    weight = Column(Float)
+    pre_draft_ranking = Column(Integer)
+    pre_draft_position_ranking = Column(Integer)
+    pre_draft_grade = Column(Float)
+    __table_args__ = (UniqueConstraint('year', 'overall', 'source_id', name='uq_cfbd_draft_pick'),)
+
+
+class NflCombineMeasurement(Base):
+    """NFL Scouting Combine results (nflverse load_combine, sourced from PFR's
+    combine pages and redistributed by nflverse). A null drill = not recorded
+    (did not participate / not measured) -- never imputed as a poor result.
+    No exact per-player test date exists in the source, so the date is stored
+    at season precision with the combine's documented window."""
+    __tablename__ = 'nfl_combine_measurements'
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    source_id = Column(String, ForeignKey('sources.source_id'), nullable=False)
+    combine_season = Column(Integer, nullable=False)
+    pfr_id = Column(String)
+    cfb_id_slug = Column(String)
+    player_name = Column(String, nullable=False)
+    position = Column(String)
+    school = Column(String)
+    height_inches = Column(Float)
+    weight_lbs = Column(Float)
+    forty = Column(Float)
+    bench = Column(Float)
+    vertical = Column(Float)
+    broad_jump = Column(Float)
+    cone = Column(Float)
+    shuttle = Column(Float)
+    draft_year = Column(Integer)
+    draft_overall = Column(Integer)
+    measurement_event = Column(String, nullable=False, default='nfl_scouting_combine')
+    measurement_date_precision = Column(String, nullable=False, default='season')
+    measurement_window = Column(String)
+    __table_args__ = (UniqueConstraint('combine_season', 'player_name', 'school', 'position', 'source_id',
+                                       name='uq_combine_row'),)
+
+
+class CfbOffensiveSchemeLabel(Base):
+    """One row per (team, season, dimension, label, source) scheme annotation, with full
+    provenance. verification_status: verified (manual review; the source explicitly ties
+    the label to that team AND season) | reported (Wikipedia infobox, low confidence) |
+    conflicting | insufficient_evidence | not_supported | source_unavailable |
+    searched_no_candidate_source. Labels may overlap; nothing is derived from statistics.
+    (v2 schema, 2026-11-09; the v1 table was empty and is migrated by advanced_pipeline.)"""
+    __tablename__ = 'cfb_offensive_scheme_labels'
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    team = Column(String, nullable=False)
+    season = Column(Integer, nullable=False)
+    scheme_dimension = Column(String, nullable=False)
+    scheme_label = Column(String, nullable=False)
+    verification_status = Column(String, nullable=False)
+    confidence = Column(String)
+    source_type = Column(String)
+    source_url = Column(String)
+    source_title = Column(String)
+    publication_date = Column(String)
+    evidence_summary = Column(String)
+    annotation_method = Column(String, nullable=False)
+    raw_text = Column(String)
+    notes = Column(String)
+    __table_args__ = (UniqueConstraint('team', 'season', 'scheme_dimension', 'scheme_label', 'source_url',
+                                       name='uq_scheme_label_v2'),)
+
+
+class CfbTeamSeasonScheme(Base):
+    """Per relevant team-season: research status and labels by evidence tier, plus
+    play-by-play tendencies (statistics, never labels). Pipe-separated label lists."""
+    __tablename__ = 'cfb_team_season_schemes'
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    team = Column(String, nullable=False)
+    season = Column(Integer, nullable=False)
+    taxonomy_version = Column(String, nullable=False)
+    manual_research_status = Column(String, nullable=False)
+    reported_label_status = Column(String, nullable=False)
+    verified_offensive_family = Column(String)
+    verified_run_concepts = Column(String)
+    verified_passing_concepts = Column(String)
+    verified_formation_tendency = Column(String)
+    verified_tempo = Column(String)
+    verified_spread_family = Column(Integer)
+    reported_offensive_family = Column(String)
+    reported_run_concepts = Column(String)
+    reported_passing_concepts = Column(String)
+    reported_formation_tendency = Column(String)
+    reported_tempo = Column(String)
+    reported_spread_family = Column(Integer)
+    wikipedia_off_scheme_raw = Column(String)
+    pbp_plays_nongarbage = Column(Integer)
+    pbp_reliable = Column(Boolean)
+    pass_rate_nongarbage = Column(Float)
+    standard_down_pass_rate = Column(Float)
+    passing_down_pass_rate = Column(Float)
+    early_down_pass_rate = Column(Float)
+    standard_down_share = Column(Float)
+    plays_per_game_nongarbage = Column(Float)
+    __table_args__ = (UniqueConstraint('team', 'season', name='uq_team_season_scheme'),)
+
+
+class CfbTeamRosterTalent(Base):
+    """Team-season roster talent: 247 Team Talent Composite (2015+), recruiting
+    class points (current + trailing 4-class average), and returning production
+    (known before the season). Percentiles are within-season, so ratings from
+    different years are comparable."""
+    __tablename__ = 'cfb_team_roster_talent'
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    season = Column(Integer, nullable=False)
+    team = Column(String, nullable=False)
+    feature_version = Column(String, nullable=False)
+    talent_composite = Column(Float)
+    talent_composite_pctile = Column(Float)
+    recruiting_points_class = Column(Float)
+    recruiting_rank_class = Column(Integer)
+    recruiting_points_4yr_avg = Column(Float)
+    recruiting_4yr_classes_found = Column(Integer)
+    recruiting_4yr_pctile = Column(Float)
+    returning_ppa_pct = Column(Float)
+    returning_passing_ppa_pct = Column(Float)
+    returning_receiving_ppa_pct = Column(Float)
+    returning_rushing_ppa_pct = Column(Float)
+    returning_usage = Column(Float)
+    returning_receiving_usage = Column(Float)
+    __table_args__ = (UniqueConstraint('season', 'team', name='uq_team_roster_talent'),)
+
+
+class CfbTeamSeasonEnvironment(Base):
+    """Derived team-season offensive environment: quantitative scheme profile,
+    offensive-line proxies and receiver-corps context. Each block is a PROXY:
+    sack rate reflects QB decisions and scheme as well as pass protection, and
+    team receiving volume is mostly the QB's own production (circular) -- the
+    non-circular receiver measures are concentration and exogenous recruiting
+    ratings."""
+    __tablename__ = 'cfb_team_season_environment'
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    season = Column(Integer, nullable=False)
+    team = Column(String, nullable=False)
+    feature_version = Column(String, nullable=False)
+    # scheme (quantitative)
+    plays_per_game = Column(Float)
+    pass_rate = Column(Float)
+    rush_rate = Column(Float)
+    seconds_per_play = Column(Float)
+    sp_pace = Column(Float)
+    sp_run_rate = Column(Float)
+    off_ppa = Column(Float)
+    off_success_rate = Column(Float)
+    sp_offense_rating = Column(Float)
+    # offensive line proxies
+    sacks_allowed = Column(Float)
+    sack_rate_allowed = Column(Float)
+    opp_def_sack_rate = Column(Float)
+    opp_adj_sack_rate = Column(Float)
+    team_rush_ypc = Column(Float)
+    off_stuff_rate = Column(Float)
+    off_line_yards = Column(Float)
+    off_havoc_allowed = Column(Float)
+    # receivers
+    team_receiving_yards = Column(Float)
+    top_target_reception_share = Column(Float)
+    top3_reception_share = Column(Float)
+    top3_receivers_avg_recruit_rating = Column(Float)
+    top3_receivers_rated = Column(Integer)
+    # pass defense (this team's defense; used as opponent context)
+    def_pass_ypa_allowed = Column(Float)
+    def_pass_cmp_pct_allowed = Column(Float)
+    def_pass_rank = Column(Integer)
+    __table_args__ = (UniqueConstraint('season', 'team', name='uq_team_season_environment'),)
+
+
+class ProspectCollegeSeason(Base):
+    """Joined QB-season table: one row per (drafted QB prospect, college season)
+    observed in CFBD. Season totals come from cfb_player_seasons where CFBD has
+    them, otherwise they are aggregated from box scores (season_stats_source);
+    per-game measures (games, opponent adjustment, top-defense splits) always
+    come from box scores. Transfers keep each season attached to the school
+    played for that season. identity_source records HOW the prospect was linked
+    to this CFBD athlete id (Phase-2 map, CFBD draft id, or box-score name match)."""
+    __tablename__ = 'prospect_college_seasons'
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    qb_draft_prospect_id = Column(Integer, ForeignKey('qb_draft_prospects.id'), nullable=False)
+    cfb_player_id = Column(Integer, ForeignKey('cfb_players.id'))  # null when linked only via box scores
+    cfbd_player_id = Column(String, nullable=False)
+    identity_source = Column(String, nullable=False)
+    season_stats_source = Column(String, nullable=False)  # cfbd_season_stats | box_score_aggregate
+    season = Column(Integer, nullable=False)
+    feature_version = Column(String, nullable=False)
+    team = Column(String)
+    conference = Column(String)
+    seasons_before_draft = Column(Integer)  # draft_year - season (1 = final pre-draft season)
+    is_final_college_season = Column(Boolean)
+    available_as_of = Column(Date)  # last game date of that season (data-driven)
+    attempts = Column(Float)
+    completions = Column(Float)
+    passing_yards = Column(Float)
+    passing_tds = Column(Float)
+    interceptions = Column(Float)
+    rushing_attempts = Column(Float)
+    rushing_yards = Column(Float)
+    rushing_tds = Column(Float)
+    completion_pct = Column(Float)
+    yards_per_attempt = Column(Float)
+    td_pct = Column(Float)
+    int_pct = Column(Float)
+    ncaa_passer_rating = Column(Float)
+    qb_rush_share = Column(Float)
+    box_attempts = Column(Float)
+    box_season_attempt_ratio = Column(Float)
+    team_box_score_coverage = Column(Float)  # share of team's games with box scores; < 0.8 -> per-game fields NULL
+    games_with_pass_attempt = Column(Integer)
+    games_as_leading_passer = Column(Integer)
+    team_games_played = Column(Integer)
+    participation_rate = Column(Float)
+    opp_adj_ypa = Column(Float)
+    opp_adj_completion_pct = Column(Float)
+    opp_adj_td_pct = Column(Float)
+    opp_adj_int_pct = Column(Float)
+    opp_adj_attempt_coverage = Column(Float)
+    sos_pass_defense = Column(Float)  # attempt-weighted opponent YPA allowed minus FBS mean (neg = tougher)
+    sp_strength_of_schedule = Column(Float)
+    opp_def_sp_rating_avg = Column(Float)
+    conf_rel_rating_z = Column(Float)
+    conf_rel_ypa_z = Column(Float)
+    conf_rel_rating_pctile = Column(Float)
+    vs_top_def_games = Column(Integer)
+    vs_top_def_attempts = Column(Float)
+    vs_top_def_ypa = Column(Float)
+    vs_top_def_completion_pct = Column(Float)
+    vs_top_def_rating = Column(Float)
+    __table_args__ = (UniqueConstraint('qb_draft_prospect_id', 'season', name='uq_prospect_college_season'),)
+
+
+class FeatureDefinition(Base):
+    """Versioned feature registry (source of truth: src/features/registry.py).
+    `availability_rule` states when the value becomes knowable; `model_scopes`
+    lists the model families allowed to use it (e.g. draft slot is post_draft
+    only; outcomes are target only)."""
+    __tablename__ = 'feature_definitions'
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    feature_name = Column(String, nullable=False)
+    feature_version = Column(String, nullable=False)
+    feature_group = Column(String, nullable=False)
+    description = Column(String, nullable=False)
+    source_ids = Column(String)
+    availability_rule = Column(String, nullable=False)
+    model_scopes = Column(String, nullable=False)
+    caveats = Column(String)
+    __table_args__ = (UniqueConstraint('feature_name', 'feature_version', name='uq_feature_def'),)
+
+
+class ProspectFeatureValue(Base):
+    """Model-ready pre-draft feature values in long form (one row per prospect x
+    feature x version). Missing values are simply absent rows -- never stored as
+    0 -- and every row carries the date it became knowable."""
+    __tablename__ = 'prospect_feature_values'
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    qb_draft_prospect_id = Column(Integer, ForeignKey('qb_draft_prospects.id'), nullable=False)
+    feature_name = Column(String, nullable=False)
+    feature_version = Column(String, nullable=False)
+    value = Column(Float, nullable=False)
+    available_as_of = Column(Date, nullable=False)
+    __table_args__ = (UniqueConstraint('qb_draft_prospect_id', 'feature_name', 'feature_version',
+                                       name='uq_prospect_feature'),)
+
+
+class ProspectSimilarity(Base):
+    """Nearest historical comparables, computed from standardized PRE-DRAFT
+    features only, with the reference pool restricted to earlier draft classes
+    (so a comp list never uses information from the prospect's own or later
+    classes). NFL outcomes are never inputs."""
+    __tablename__ = 'prospect_similarity'
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    qb_draft_prospect_id = Column(Integer, ForeignKey('qb_draft_prospects.id'), nullable=False)
+    comp_qb_draft_prospect_id = Column(Integer, ForeignKey('qb_draft_prospects.id'), nullable=False)
+    rank = Column(Integer, nullable=False)
+    distance = Column(Float, nullable=False)
+    n_features_compared = Column(Integer, nullable=False)
+    method = Column(String, nullable=False)
+    feature_version = Column(String, nullable=False)
+    __table_args__ = (UniqueConstraint('qb_draft_prospect_id', 'rank', 'method', 'feature_version',
+                                       name='uq_prospect_similarity'),)
+
+
+class NflProspectSeason(Base):
+    """One row per (drafted QB, NFL season) from the draft year through the last
+    completed season, INCLUDING seasons with zero appearances (explicit zeros,
+    because nflverse 1999+ is complete for regular-season appearances)."""
+    __tablename__ = 'nfl_prospect_seasons'
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    qb_draft_prospect_id = Column(Integer, ForeignKey('qb_draft_prospects.id'), nullable=False)
+    nfl_season = Column(Integer, nullable=False)
+    season_index = Column(Integer, nullable=False)  # 1 = rookie season
+    games_with_stats = Column(Integer, nullable=False, default=0)
+    games_started = Column(Integer, nullable=False, default=0)  # REG, from nflverse schedules starting-QB ids
+    postseason_starts = Column(Integer, nullable=False, default=0)
+    pass_attempts = Column(Float)
+    pass_completions = Column(Float)
+    passing_yards = Column(Float)
+    passing_tds = Column(Float)
+    interceptions = Column(Float)
+    sacks = Column(Float)
+    sack_yards = Column(Float)
+    __table_args__ = (UniqueConstraint('qb_draft_prospect_id', 'nfl_season', name='uq_nfl_prospect_season'),)
+
+
+class NflCareerOutcome(Base):
+    """Target table. Window-based targets are NULL (not 0) when the window is not
+    fully observed, so incomplete careers are never labelled failures."""
+    __tablename__ = 'nfl_career_outcomes'
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    qb_draft_prospect_id = Column(Integer, ForeignKey('qb_draft_prospects.id'), nullable=False, unique=True)
+    target_version = Column(String, nullable=False)
+    observation_end_season = Column(Integer, nullable=False)
+    seasons_observed = Column(Integer, nullable=False)
+    window_5yr_complete = Column(Boolean, nullable=False)
+    appeared_any_game = Column(Boolean, nullable=False)
+    started_any_game = Column(Boolean)  # NULL when 0 starts observed AND window incomplete
+    started_1plus_5yr = Column(Boolean)
+    started_16plus_5yr = Column(Boolean)
+    started_32plus_5yr = Column(Boolean)
+    started_64plus_5yr = Column(Boolean)
+    games_started_5yr = Column(Float)
+    pass_yards_5yr = Column(Float)
+    pass_tds_5yr = Column(Float)
+    pass_attempts_5yr = Column(Float)
+    any_a_5yr = Column(Float)  # NULL unless window complete AND attempts >= threshold
+    passer_rating_5yr = Column(Float)
+    efficiency_min_attempts = Column(Integer, nullable=False)
+    games_started_observed = Column(Integer, nullable=False)
+    first_appearance_season = Column(Integer)
+    last_appearance_season = Column(Integer)
+    last_start_season = Column(Integer)
+    seasons_to_final_appearance = Column(Integer)
+    seasons_to_final_start = Column(Integer)
+    career_span_seasons = Column(Integer)
+    career_end_status = Column(String, nullable=False)  # active_or_censored | inferred_inactive | never_appeared_*
+    nflverse_roster_status = Column(String)
+    pfr_last_season = Column(Integer)
+
+
+class SurvivalRecord(Base):
+    """Survival-analysis rows (one per prospect x event definition). Time unit =
+    NFL seasons since the draft (1 = rookie season). event_observed=False means
+    right-censored at `duration_seasons`."""
+    __tablename__ = 'survival_records'
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    qb_draft_prospect_id = Column(Integer, ForeignKey('qb_draft_prospects.id'), nullable=False)
+    event_name = Column(String, nullable=False)
+    definition_version = Column(String, nullable=False)
+    duration_seasons = Column(Float, nullable=False)
+    event_observed = Column(Boolean, nullable=False)
+    censor_reason = Column(String)
+    event_season = Column(Integer)
+    last_observed_season = Column(Integer, nullable=False)
+    officially_confirmed = Column(Boolean)
+    at_risk_population = Column(String, nullable=False)
+    __table_args__ = (UniqueConstraint('qb_draft_prospect_id', 'event_name', 'definition_version',
+                                       name='uq_survival_record'),)
+
+
+class DraftValuePrediction(Base):
+    """Model predictions stored next to the draft decision, for draft-value and
+    incremental-value analysis. Empty until models are trained (this phase
+    deliberately trains none). `model_scope` must be 'pre_draft_college_only',
+    'pre_draft_full' or 'post_draft'; only post_draft models may use draft slot."""
+    __tablename__ = 'draft_value_predictions'
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    qb_draft_prospect_id = Column(Integer, ForeignKey('qb_draft_prospects.id'), nullable=False)
+    model_name = Column(String, nullable=False)
+    model_version = Column(String, nullable=False)
+    model_scope = Column(String, nullable=False)
+    target_name = Column(String, nullable=False)
+    split = Column(String)  # train | validation | test | censored_holdout
+    predicted_value = Column(Float)
+    prediction_lower = Column(Float)
+    prediction_upper = Column(Float)
+    created_at = Column(DateTime, server_default=func.now())
+    __table_args__ = (UniqueConstraint('qb_draft_prospect_id', 'model_name', 'model_version', 'target_name',
+                                       name='uq_draft_value_prediction'),)
+
+
 def get_engine(db_url: str | None = None):
     """Returns a SQLAlchemy engine. Defaults to the project's SQLite file; set
     DATABASE_URL (e.g. postgresql+psycopg2://user:pass@host:5432/dbname) to target Postgres."""

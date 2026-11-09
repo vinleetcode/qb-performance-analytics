@@ -1,0 +1,17 @@
+{
+  "_comment": "First day of each NFL Draft (local date). Used as the PREDICTION CUTOFF for pre-draft features (a feature must be knowable strictly before this date) and as the reference date for age-at-draft. Entered manually from the public record of league-announced draft dates; not fetched programmatically. Cross-checked at runtime against nflverse's independent integer age_at_draft (tests/test_advanced_features.py::test_age_at_draft_consistent_with_nflverse), so a wrong date would surface as an age mismatch.",
+  "provenance": "public record (league-announced draft dates), entered 2026-11-09",
+  "draft_first_day": {
+    "2000": "2000-04-15", "2001": "2001-04-21", "2002": "2002-04-20", "2003": "2003-04-26",
+    "2004": "2004-04-24", "2005": "2005-04-23", "2006": "2006-04-29", "2007": "2007-04-28",
+    "2008": "2008-04-26", "2009": "2009-04-25", "2010": "2010-04-22", "2011": "2011-04-28",
+    "2012": "2012-04-26", "2013": "2013-04-25", "2014": "2014-05-08", "2015": "2015-04-30",
+    "2016": "2016-04-28", "2017": "2017-04-27", "2018": "2018-04-26", "2019": "2019-04-25",
+    "2020": "2020-04-23", "2021": "2021-04-29", "2022": "2022-04-28", "2023": "2023-04-27",
+    "2024": "2024-04-25", "2025": "2025-04-24", "2026": "2026-04-23"
+  },
+  "combine_known_by": {
+    "_comment": "The combine is held in late February / early March of the draft year. No per-player test date exists in the source, so combine results are treated as knowable by March 15 of the draft year -- a conservative bound that is still before every draft date above.",
+    "month_day": "03-15"
+  }
+}

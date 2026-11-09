@@ -37,8 +37,14 @@ class CFBDRequestError(RuntimeError):
     includes the API key."""
 
 
+class CFBDBudgetExceeded(CFBDRequestError):
+    """Raised BEFORE a network call that would exceed this client's per-run
+    call budget. Cached reads never count against the budget."""
+
+
 class CFBDClient:
-    def __init__(self, cache_dir: Path | None = None, api_key: str | None = None):
+    def __init__(self, cache_dir: Path | None = None, api_key: str | None = None,
+                 max_network_calls: int | None = None):
         self.cache_dir = cache_dir or DEFAULT_CACHE_DIR
         self.cache_dir.mkdir(parents=True, exist_ok=True)
         # Resolved lazily (not at construction) so building a client in code
@@ -46,6 +52,12 @@ class CFBDClient:
         self._api_key = api_key
         self._session = requests.Session()
         self._last_request_at = 0.0
+        # Hard per-run ceiling on real HTTP requests (cache misses), so a bug
+        # in a loop can never burn through the monthly free-tier quota. None =
+        # unlimited (the original Phase-2 behaviour, kept for compatibility).
+        self.max_network_calls = max_network_calls
+        self.network_calls = 0
+        self.cache_hits = 0
 
     def _auth_header(self) -> dict:
         key = self._api_key or get_cfbd_api_key()
@@ -63,8 +75,15 @@ class CFBDClient:
         cache_file = self.cache_dir / self._cache_key(path, params)
 
         if use_cache and cache_file.exists():
+            self.cache_hits += 1
             return json.loads(cache_file.read_text(encoding='utf-8'))
 
+        if self.max_network_calls is not None and self.network_calls >= self.max_network_calls:
+            raise CFBDBudgetExceeded(
+                f'CFBD per-run call budget of {self.max_network_calls} reached before {path}; '
+                'rerun later (cached responses are reused, so progress is not lost).'
+            )
+        self.network_calls += 1
         self._throttle()
         url = f'{BASE_URL}{path}'
         last_exc: Exception | None = None

@@ -10,3 +10,5 @@ sqlalchemy>=2.0
 psycopg2-binary>=2.9  # optional: only needed if DATABASE_URL points at PostgreSQL
 python-dotenv>=1.0
 requests>=2.31
+# Optional (Phase-3 modelling prep; not required -- src/modeling degrades gracefully):
+#   lifelines, scikit-survival, shap
