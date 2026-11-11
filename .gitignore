@@ -1,0 +1,6 @@
+# Claude Code local configuration
+.claude/
+# Environment variables and credentials (the project also ignores these in nfl-qb-analytics/.gitignore)
+.env
+.env.*
+!.env.example

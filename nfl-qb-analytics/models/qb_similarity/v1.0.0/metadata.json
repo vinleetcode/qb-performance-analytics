@@ -1,0 +1,39 @@
+{
+  "model_version": "1.0.0",
+  "features": [
+    "cmp__raw",
+    "ypa__raw",
+    "td__raw",
+    "int__raw",
+    "att_pg__raw",
+    "rush_pg__raw",
+    "opp_ypa__raw",
+    "sos__raw",
+    "env_pass_rate",
+    "talent_recruiting_4yr_pctile",
+    "age_at_draft",
+    "height_inches",
+    "dev_yoy_ypa_final",
+    "seasons_as_primary_passer"
+  ],
+  "k": 5,
+  "distance": "nan-Euclidean on pool z-scores",
+  "pool": "drafted QBs 2005-2026 with v2 features; queries use only classes before their own",
+  "closeness_index": "heuristic: % of pool pairwise distances larger than the pair distance; not a probability",
+  "artifacts": [
+    "scaler.joblib",
+    "metadata.json"
+  ],
+  "artifact_sha256": {
+    "scaler.joblib": "a5d2c57ca00f3549fa8a81b3ca2742fe0ffa4c45770a55dc639a753a0d6a7cfc"
+  },
+  "external_data_files": [
+    {
+      "role": "pool",
+      "path": "data/model_artifacts/qb_similarity/v1.0.0/pool.parquet",
+      "sha256": "4ecd3ddef5d00fb5d69cddc0d1559bc3409384e2fa04c40c15470c51e4429fa6",
+      "regenerate": "python -m src.modeling.prospect_similarity",
+      "reason": "player-level CFBD/nflverse-derived data; kept out of Git"
+    }
+  ]
+}

@@ -1,0 +1,658 @@
+{
+  "generated_from": "python -m api.performance on 2026-11-10 from results/phase5 and results/phase5_5",
+  "evaluation_status": {
+    "draft_probability": "chronological backtest, test drafts 2014-2025; feature sets were compared on these same drafts (Phase 5) - exploratory, not an untouched final test",
+    "draft_round_and_pick": "nested chronological validation, test drafts 2012-2026: model family and penalty chosen inside earlier drafts only",
+    "starter_probabilities": "nested chronological backtest with a five-season label embargo, test classes 2012-2021; the 2019-2021 classes were also examined in earlier phases",
+    "production": "nested chronological backtest, test classes 2012-2021. The selection rule was revised once after its first nested run; the shipped family matches the final inner choice. Shipped-family errors are hindsight numbers (optimistic); nested-selection errors are conservative.",
+    "intervals": "coverage measured on later classes; not guaranteed under drift. The pre-draft interval method is a reviewed override of the automated choice (backtest-informed, toward wider intervals).",
+    "comparisons": "explanatory only; the comps' outcome rate is a weak predictor and is never served as a probability"
+  },
+  "sections": {
+    "draft_probability": {
+      "population": "FBS QBs whose college career verifiably ended after >= 4 years (556 final seasons, 138 drafted)",
+      "test_rows": 384,
+      "test_drafted": 87,
+      "models": [
+        {
+          "variant": "A_college",
+          "auc": 0.8784,
+          "auc_lo": 0.8369,
+          "auc_hi": 0.918,
+          "brier": 0.1146,
+          "log_loss": 0.3568,
+          "calibration_slope": 0.8946
+        },
+        {
+          "variant": "B_college_invited",
+          "auc": 0.9063,
+          "auc_lo": 0.8744,
+          "auc_hi": 0.9365,
+          "brier": 0.095,
+          "log_loss": 0.315,
+          "calibration_slope": 0.8868
+        },
+        {
+          "variant": "C_college_invited_measures",
+          "auc": 0.907,
+          "auc_lo": 0.8639,
+          "auc_hi": 0.9431,
+          "brier": 0.0913,
+          "log_loss": 0.3148,
+          "calibration_slope": 0.8558
+        }
+      ],
+      "baseline_brier_historical_rate": 0.1775,
+      "note": "A = pre-Combine (served as pre_combine); C = post-Combine (served as post_combine). Most of the gain from A to C comes from Combine participation (B), not measurements."
+    },
+    "draft_round": {
+      "seven_rounds": [
+        {
+          "model": "selected",
+          "n": 166,
+          "rps": 0.1763,
+          "rps_lo": 0.1571,
+          "rps_hi": 0.1962,
+          "log_loss": 1.7799,
+          "top_class_accuracy": 0.2711
+        },
+        {
+          "model": "freq",
+          "n": 166,
+          "rps": 0.2083,
+          "rps_lo": 0.1983,
+          "rps_hi": 0.219,
+          "log_loss": 1.9065,
+          "top_class_accuracy": 0.2711
+        },
+        {
+          "model": "phase5_prop_odds_C0.5",
+          "n": 166,
+          "rps": 0.1827,
+          "rps_lo": 0.1621,
+          "rps_hi": 0.2062,
+          "log_loss": 1.8217,
+          "top_class_accuracy": 0.2892
+        },
+        {
+          "model": "multinomial_C0.5",
+          "n": 166,
+          "rps": 0.198,
+          "rps_lo": 0.1775,
+          "rps_hi": 0.2191,
+          "log_loss": 2.3277,
+          "top_class_accuracy": 0.247
+        }
+      ],
+      "three_groups": [
+        {
+          "model": "selected",
+          "n": 166,
+          "rps": 0.1759,
+          "rps_lo": 0.1509,
+          "rps_hi": 0.1982,
+          "log_loss": 0.8731,
+          "top_class_accuracy": 0.6265
+        },
+        {
+          "model": "freq",
+          "n": 166,
+          "rps": 0.2249,
+          "rps_lo": 0.2095,
+          "rps_hi": 0.243,
+          "log_loss": 1.0144,
+          "top_class_accuracy": 0.5361
+        },
+        {
+          "model": "phase5_prop_odds_C0.5",
+          "n": 166,
+          "rps": 0.1799,
+          "rps_lo": 0.1531,
+          "rps_hi": 0.206,
+          "log_loss": 0.8969,
+          "top_class_accuracy": 0.6024
+        },
+        {
+          "model": "multinomial_C0.5",
+          "n": 166,
+          "rps": 0.1887,
+          "rps_lo": 0.1619,
+          "rps_hi": 0.2139,
+          "log_loss": 0.9979,
+          "top_class_accuracy": 0.5602
+        }
+      ],
+      "note": "`selected` = nested choice; `freq` = historical round frequencies (baseline)."
+    },
+    "pick": {
+      "errors": [
+        {
+          "model": "ridge_log_pick_nested",
+          "mae_picks": 69.11,
+          "median_abs_error_picks": 46.8618
+        },
+        {
+          "model": "historical_median",
+          "mae_picks": 74.0843,
+          "median_abs_error_picks": 81.0
+        }
+      ],
+      "coverage": [
+        {
+          "interval_method": "chrono",
+          "coverage50": 0.4518,
+          "coverage80": 0.7289,
+          "coverage90": 0.8675
+        },
+        {
+          "interval_method": "groupkfold",
+          "coverage50": 0.4639,
+          "coverage80": 0.747,
+          "coverage90": 0.8916
+        },
+        {
+          "interval_method": "baseline",
+          "coverage50": 0.4458,
+          "coverage80": 0.741,
+          "coverage90": 0.9096
+        }
+      ],
+      "served_interval_method": "groupkfold"
+    },
+    "starter_probabilities": [
+      {
+        "feature_set": "post_draft",
+        "model": "base_rate",
+        "threshold": 16,
+        "n": 107,
+        "n_pos": 43,
+        "auc": 0.5,
+        "brier": 0.2376,
+        "log_loss": 0.6678,
+        "calibration_slope": null,
+        "calibration_intercept": null
+      },
+      {
+        "feature_set": "post_draft",
+        "model": "base_rate",
+        "threshold": 32,
+        "n": 107,
+        "n_pos": 32,
+        "auc": 0.5,
+        "brier": 0.2112,
+        "log_loss": 0.614,
+        "calibration_slope": null,
+        "calibration_intercept": null
+      },
+      {
+        "feature_set": "post_draft",
+        "model": "base_rate",
+        "threshold": 64,
+        "n": 107,
+        "n_pos": 15,
+        "auc": 0.5,
+        "brier": 0.1279,
+        "log_loss": 0.4642,
+        "calibration_slope": null,
+        "calibration_intercept": null
+      },
+      {
+        "feature_set": "post_draft",
+        "model": "nested_logit_pava",
+        "threshold": 16,
+        "n": 107,
+        "n_pos": 43,
+        "auc": 0.8819,
+        "brier": 0.1274,
+        "log_loss": 0.4043,
+        "calibration_slope": 1.1388,
+        "calibration_intercept": 0.502
+      },
+      {
+        "feature_set": "post_draft",
+        "model": "nested_logit_pava",
+        "threshold": 32,
+        "n": 107,
+        "n_pos": 32,
+        "auc": 0.8862,
+        "brier": 0.114,
+        "log_loss": 0.3767,
+        "calibration_slope": 1.1953,
+        "calibration_intercept": 0.6025
+      },
+      {
+        "feature_set": "post_draft",
+        "model": "nested_logit_pava",
+        "threshold": 64,
+        "n": 107,
+        "n_pos": 15,
+        "auc": 0.7435,
+        "brier": 0.1002,
+        "log_loss": 0.3887,
+        "calibration_slope": 0.6623,
+        "calibration_intercept": 0.1503
+      },
+      {
+        "feature_set": "pre_draft",
+        "model": "base_rate",
+        "threshold": 16,
+        "n": 107,
+        "n_pos": 43,
+        "auc": 0.5,
+        "brier": 0.2376,
+        "log_loss": 0.6678,
+        "calibration_slope": null,
+        "calibration_intercept": null
+      },
+      {
+        "feature_set": "pre_draft",
+        "model": "base_rate",
+        "threshold": 32,
+        "n": 107,
+        "n_pos": 32,
+        "auc": 0.5,
+        "brier": 0.2112,
+        "log_loss": 0.614,
+        "calibration_slope": null,
+        "calibration_intercept": null
+      },
+      {
+        "feature_set": "pre_draft",
+        "model": "base_rate",
+        "threshold": 64,
+        "n": 107,
+        "n_pos": 15,
+        "auc": 0.5,
+        "brier": 0.1279,
+        "log_loss": 0.4642,
+        "calibration_slope": null,
+        "calibration_intercept": null
+      },
+      {
+        "feature_set": "pre_draft",
+        "model": "nested_logit_pava",
+        "threshold": 16,
+        "n": 107,
+        "n_pos": 43,
+        "auc": 0.7569,
+        "brier": 0.1936,
+        "log_loss": 0.5849,
+        "calibration_slope": 0.9434,
+        "calibration_intercept": -0.0624
+      },
+      {
+        "feature_set": "pre_draft",
+        "model": "nested_logit_pava",
+        "threshold": 32,
+        "n": 107,
+        "n_pos": 32,
+        "auc": 0.7742,
+        "brier": 0.1647,
+        "log_loss": 0.5031,
+        "calibration_slope": 1.0248,
+        "calibration_intercept": 0.0863
+      },
+      {
+        "feature_set": "pre_draft",
+        "model": "nested_logit_pava",
+        "threshold": 64,
+        "n": 107,
+        "n_pos": 15,
+        "auc": 0.5986,
+        "brier": 0.1178,
+        "log_loss": 0.4671,
+        "calibration_slope": 0.2443,
+        "calibration_intercept": -1.1174
+      }
+    ],
+    "production": {
+      "test_qbs": 107,
+      "test_classes": [
+        2012,
+        2021
+      ],
+      "errors": [
+        {
+          "view": "pre_draft",
+          "statistic": "games_played",
+          "mae_shipped_family": 18.9,
+          "mae_nested_selection": 21.0,
+          "mae_historical_median": 21.51,
+          "shipped_family": "poisson"
+        },
+        {
+          "view": "pre_draft",
+          "statistic": "games_started",
+          "mae_shipped_family": 18.12,
+          "mae_nested_selection": 20.15,
+          "mae_historical_median": 20.57,
+          "shipped_family": "poisson"
+        },
+        {
+          "view": "pre_draft",
+          "statistic": "interceptions",
+          "mae_shipped_family": 14.69,
+          "mae_nested_selection": 15.87,
+          "mae_historical_median": 16.18,
+          "shipped_family": "poisson"
+        },
+        {
+          "view": "pre_draft",
+          "statistic": "pass_attempts",
+          "mae_shipped_family": 609.93,
+          "mae_nested_selection": 684.21,
+          "mae_historical_median": 687.36,
+          "shipped_family": "poisson"
+        },
+        {
+          "view": "pre_draft",
+          "statistic": "pass_completions",
+          "mae_shipped_family": 384.4,
+          "mae_nested_selection": 431.93,
+          "mae_historical_median": 434.06,
+          "shipped_family": "poisson"
+        },
+        {
+          "view": "pre_draft",
+          "statistic": "pass_tds",
+          "mae_shipped_family": 27.05,
+          "mae_nested_selection": 30.08,
+          "mae_historical_median": 30.29,
+          "shipped_family": "poisson"
+        },
+        {
+          "view": "pre_draft",
+          "statistic": "pass_yards",
+          "mae_shipped_family": 4355.62,
+          "mae_nested_selection": 4919.68,
+          "mae_historical_median": 4938.86,
+          "shipped_family": "poisson"
+        },
+        {
+          "view": "pre_draft",
+          "statistic": "rush_attempts",
+          "mae_shipped_family": 80.24,
+          "mae_nested_selection": 86.45,
+          "mae_historical_median": 89.93,
+          "shipped_family": "poisson"
+        },
+        {
+          "view": "pre_draft",
+          "statistic": "rush_tds",
+          "mae_shipped_family": 4.54,
+          "mae_nested_selection": 4.54,
+          "mae_historical_median": 4.56,
+          "shipped_family": "poisson"
+        },
+        {
+          "view": "pre_draft",
+          "statistic": "rush_yards",
+          "mae_shipped_family": 392.55,
+          "mae_nested_selection": 431.56,
+          "mae_historical_median": 446.01,
+          "shipped_family": "poisson"
+        },
+        {
+          "view": "post_draft",
+          "statistic": "games_played",
+          "mae_shipped_family": 13.42,
+          "mae_nested_selection": 14.53,
+          "mae_historical_median": 21.51,
+          "shipped_family": "ridge"
+        },
+        {
+          "view": "post_draft",
+          "statistic": "games_started",
+          "mae_shipped_family": 12.4,
+          "mae_nested_selection": 14.06,
+          "mae_historical_median": 20.57,
+          "shipped_family": "ridge"
+        },
+        {
+          "view": "post_draft",
+          "statistic": "interceptions",
+          "mae_shipped_family": 9.38,
+          "mae_nested_selection": 10.97,
+          "mae_historical_median": 16.18,
+          "shipped_family": "ridge"
+        },
+        {
+          "view": "post_draft",
+          "statistic": "pass_attempts",
+          "mae_shipped_family": 424.79,
+          "mae_nested_selection": 485.28,
+          "mae_historical_median": 687.36,
+          "shipped_family": "ridge"
+        },
+        {
+          "view": "post_draft",
+          "statistic": "pass_completions",
+          "mae_shipped_family": 277.58,
+          "mae_nested_selection": 308.79,
+          "mae_historical_median": 434.06,
+          "shipped_family": "ridge"
+        },
+        {
+          "view": "post_draft",
+          "statistic": "pass_tds",
+          "mae_shipped_family": 20.32,
+          "mae_nested_selection": 22.2,
+          "mae_historical_median": 30.29,
+          "shipped_family": "ridge"
+        },
+        {
+          "view": "post_draft",
+          "statistic": "pass_yards",
+          "mae_shipped_family": 3158.25,
+          "mae_nested_selection": 3578.53,
+          "mae_historical_median": 4938.86,
+          "shipped_family": "ridge"
+        },
+        {
+          "view": "post_draft",
+          "statistic": "rush_attempts",
+          "mae_shipped_family": 67.38,
+          "mae_nested_selection": 69.98,
+          "mae_historical_median": 89.93,
+          "shipped_family": "ridge"
+        },
+        {
+          "view": "post_draft",
+          "statistic": "rush_tds",
+          "mae_shipped_family": 3.77,
+          "mae_nested_selection": 3.89,
+          "mae_historical_median": 4.56,
+          "shipped_family": "ridge"
+        },
+        {
+          "view": "post_draft",
+          "statistic": "rush_yards",
+          "mae_shipped_family": 363.95,
+          "mae_nested_selection": 380.12,
+          "mae_historical_median": 446.01,
+          "shipped_family": "ridge"
+        }
+      ]
+    },
+    "interval_calibration": {
+      "served_method": {
+        "pre_draft": "oof_scaled",
+        "post_draft": "oof_scaled"
+      },
+      "coverage_by_statistic": [
+        {
+          "feature_set": "post_draft",
+          "target": "games_played",
+          "coverage50": 0.5794,
+          "coverage80": 0.8598,
+          "coverage90": 0.9159
+        },
+        {
+          "feature_set": "post_draft",
+          "target": "games_started",
+          "coverage50": 0.5047,
+          "coverage80": 0.8131,
+          "coverage90": 0.8785
+        },
+        {
+          "feature_set": "post_draft",
+          "target": "interceptions",
+          "coverage50": 0.5888,
+          "coverage80": 0.8505,
+          "coverage90": 0.8972
+        },
+        {
+          "feature_set": "post_draft",
+          "target": "pass_attempts",
+          "coverage50": 0.4673,
+          "coverage80": 0.8131,
+          "coverage90": 0.8972
+        },
+        {
+          "feature_set": "post_draft",
+          "target": "pass_completions",
+          "coverage50": 0.4299,
+          "coverage80": 0.8037,
+          "coverage90": 0.8972
+        },
+        {
+          "feature_set": "post_draft",
+          "target": "pass_tds",
+          "coverage50": 0.5327,
+          "coverage80": 0.7383,
+          "coverage90": 0.8785
+        },
+        {
+          "feature_set": "post_draft",
+          "target": "pass_yards",
+          "coverage50": 0.4766,
+          "coverage80": 0.7664,
+          "coverage90": 0.8785
+        },
+        {
+          "feature_set": "post_draft",
+          "target": "rush_attempts",
+          "coverage50": 0.5421,
+          "coverage80": 0.7383,
+          "coverage90": 0.8505
+        },
+        {
+          "feature_set": "post_draft",
+          "target": "rush_tds",
+          "coverage50": 0.4299,
+          "coverage80": 0.6729,
+          "coverage90": 0.8131
+        },
+        {
+          "feature_set": "post_draft",
+          "target": "rush_yards",
+          "coverage50": 0.5234,
+          "coverage80": 0.729,
+          "coverage90": 0.8505
+        },
+        {
+          "feature_set": "pre_draft",
+          "target": "games_played",
+          "coverage50": 0.4953,
+          "coverage80": 0.8037,
+          "coverage90": 0.8785
+        },
+        {
+          "feature_set": "pre_draft",
+          "target": "games_started",
+          "coverage50": 0.5234,
+          "coverage80": 0.7944,
+          "coverage90": 0.8879
+        },
+        {
+          "feature_set": "pre_draft",
+          "target": "interceptions",
+          "coverage50": 0.6168,
+          "coverage80": 0.8505,
+          "coverage90": 0.9065
+        },
+        {
+          "feature_set": "pre_draft",
+          "target": "pass_attempts",
+          "coverage50": 0.486,
+          "coverage80": 0.8037,
+          "coverage90": 0.8785
+        },
+        {
+          "feature_set": "pre_draft",
+          "target": "pass_completions",
+          "coverage50": 0.4766,
+          "coverage80": 0.7757,
+          "coverage90": 0.8598
+        },
+        {
+          "feature_set": "pre_draft",
+          "target": "pass_tds",
+          "coverage50": 0.514,
+          "coverage80": 0.7944,
+          "coverage90": 0.8505
+        },
+        {
+          "feature_set": "pre_draft",
+          "target": "pass_yards",
+          "coverage50": 0.4486,
+          "coverage80": 0.785,
+          "coverage90": 0.8692
+        },
+        {
+          "feature_set": "pre_draft",
+          "target": "rush_attempts",
+          "coverage50": 0.4579,
+          "coverage80": 0.757,
+          "coverage90": 0.8505
+        },
+        {
+          "feature_set": "pre_draft",
+          "target": "rush_tds",
+          "coverage50": 0.5327,
+          "coverage80": 0.757,
+          "coverage90": 0.8131
+        },
+        {
+          "feature_set": "pre_draft",
+          "target": "rush_yards",
+          "coverage50": 0.486,
+          "coverage80": 0.7944,
+          "coverage90": 0.8692
+        }
+      ],
+      "mean_coverage": {
+        "post_draft": {
+          "coverage50": 0.507,
+          "coverage80": 0.779,
+          "coverage90": 0.876
+        },
+        "pre_draft": {
+          "coverage50": 0.504,
+          "coverage80": 0.792,
+          "coverage90": 0.866
+        }
+      }
+    },
+    "comparisons": {
+      "knn_outcome_rate_auc_32plus_starts": 0.691,
+      "note": "Phase-5 exploratory backtest; comps are explanatory"
+    },
+    "model_versions": {
+      "draft_probability": "qb_draft v1.0.0",
+      "draft_round_pick": "qb_draft v1.1.0",
+      "career": "qb_career_production v1.1.0",
+      "comparisons": "qb_similarity v1.0.0",
+      "reference": "qb_career_success v2.0.0"
+    }
+  },
+  "limitations": [
+    "About 10 QBs per draft class and ten test classes: every metric has wide class-bootstrap intervals.",
+    "Draft eligibility, declarations and transfers are inferred, not observed; P(drafted) covers only the verified population.",
+    "Pre-draft five-season totals are only modestly better than the historical median (not statistically established).",
+    "P(64+ starts) pre-draft is poorly calibrated (few events).",
+    "Rushing-total intervals under-cover; pick intervals under-cover (about 75% at nominal 80%).",
+    "NFL efficiency rates are not forecast: they were not predictable from college data.",
+    "Drafting team, coaching and injuries are not modelled."
+  ]
+}

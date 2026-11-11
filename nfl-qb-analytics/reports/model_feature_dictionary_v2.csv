@@ -1,0 +1,36 @@
+feature,base_stat,method,in_combo,availability_cutoff,missing_rate_historical,normalization_version
+cmp__raw,final-season completion %,raw units,False,end of final college season,0.0,2.0.0
+cmp__season_z,final-season completion %,"z vs season FBS reference (>= 100 att), clip +/-4.0",True,end of final college season,0.0,2.0.0
+cmp__season_pct,final-season completion %,mid-rank percentile vs season FBS reference (0-1),False,end of final college season,0.0,2.0.0
+cmp__conf_z,final-season completion %,"z vs (season, conference) reference; season fallback if < 6 passers",False,end of final college season,0.0,2.0.0
+ypa__raw,final-season yards per attempt,raw units,False,end of final college season,0.0,2.0.0
+ypa__season_z,final-season yards per attempt,"z vs season FBS reference (>= 100 att), clip +/-4.0",True,end of final college season,0.0,2.0.0
+ypa__season_pct,final-season yards per attempt,mid-rank percentile vs season FBS reference (0-1),False,end of final college season,0.0,2.0.0
+ypa__conf_z,final-season yards per attempt,"z vs (season, conference) reference; season fallback if < 6 passers",False,end of final college season,0.0,2.0.0
+td__raw,final-season TD %,raw units,True,end of final college season,0.0,2.0.0
+td__season_z,final-season TD %,"z vs season FBS reference (>= 100 att), clip +/-4.0",False,end of final college season,0.0,2.0.0
+td__season_pct,final-season TD %,mid-rank percentile vs season FBS reference (0-1),False,end of final college season,0.0,2.0.0
+td__conf_z,final-season TD %,"z vs (season, conference) reference; season fallback if < 6 passers",False,end of final college season,0.0,2.0.0
+int__raw,final-season INT % (normalized scores: higher = FEWER interceptions),raw units,False,end of final college season,0.0,2.0.0
+int__season_z,final-season INT % (normalized scores: higher = FEWER interceptions),"z vs season FBS reference (>= 100 att), clip +/-4.0",True,end of final college season,0.0,2.0.0
+int__season_pct,final-season INT % (normalized scores: higher = FEWER interceptions),mid-rank percentile vs season FBS reference (0-1),False,end of final college season,0.0,2.0.0
+int__conf_z,final-season INT % (normalized scores: higher = FEWER interceptions),"z vs (season, conference) reference; season fallback if < 6 passers",False,end of final college season,0.0,2.0.0
+att_pg__raw,final-season pass attempts per game with a pass attempt,raw units,True,end of final college season,0.0,2.0.0
+att_pg__season_z,final-season pass attempts per game with a pass attempt,"z vs season FBS reference (>= 100 att), clip +/-4.0",False,end of final college season,0.0,2.0.0
+att_pg__season_pct,final-season pass attempts per game with a pass attempt,mid-rank percentile vs season FBS reference (0-1),False,end of final college season,0.0,2.0.0
+att_pg__conf_z,final-season pass attempts per game with a pass attempt,"z vs (season, conference) reference; season fallback if < 6 passers",False,end of final college season,0.0,2.0.0
+rush_pg__raw,"rushing yards per game, games-weighted mean over the last <= 3 pre-draft seasons",raw units,True,end of final college season,0.0,2.0.0
+rush_pg__season_z,"rushing yards per game, games-weighted mean over the last <= 3 pre-draft seasons","z vs season FBS reference (>= 100 att), clip +/-4.0",False,end of final college season,0.0,2.0.0
+rush_pg__season_pct,"rushing yards per game, games-weighted mean over the last <= 3 pre-draft seasons",mid-rank percentile vs season FBS reference (0-1),False,end of final college season,0.0,2.0.0
+rush_pg__conf_z,"rushing yards per game, games-weighted mean over the last <= 3 pre-draft seasons","z vs (season, conference) reference; season fallback if < 6 passers",False,end of final college season,0.0,2.0.0
+opp_ypa__raw,final-season opponent-adjusted YPA (leave-one-out opponent pass defense),raw units,False,end of final college season,0.0,2.0.0
+opp_ypa__season_z,final-season opponent-adjusted YPA (leave-one-out opponent pass defense),"z vs season FBS reference (>= 100 att), clip +/-4.0",True,end of final college season,0.0,2.0.0
+opp_ypa__season_pct,final-season opponent-adjusted YPA (leave-one-out opponent pass defense),mid-rank percentile vs season FBS reference (0-1),False,end of final college season,0.0,2.0.0
+opp_ypa__conf_z,final-season opponent-adjusted YPA (leave-one-out opponent pass defense),"z vs (season, conference) reference; season fallback if < 6 passers",False,end of final college season,0.0,2.0.0
+sos__raw,final-season mean opponent pass-defense YPA allowed vs league (normalized: higher = TOUGHER),raw units,True,end of final college season,0.0,2.0.0
+sos__season_z,final-season mean opponent pass-defense YPA allowed vs league (normalized: higher = TOUGHER),"z vs season FBS reference (>= 100 att), clip +/-4.0",False,end of final college season,0.0,2.0.0
+sos__season_pct,final-season mean opponent pass-defense YPA allowed vs league (normalized: higher = TOUGHER),mid-rank percentile vs season FBS reference (0-1),False,end of final college season,0.0,2.0.0
+sos__conf_z,final-season mean opponent pass-defense YPA allowed vs league (normalized: higher = TOUGHER),"z vs (season, conference) reference; season fallback if < 6 passers",False,end of final college season,0.0,2.0.0
+talent_recruiting_4yr_pctile,era-stable context (see v1 dictionary),as v1,True,before draft day,0.0,2.0.0
+age_at_draft,era-stable context (see v1 dictionary),as v1,True,before draft day,0.04371584699453552,2.0.0
+height_inches,era-stable context (see v1 dictionary),as v1,True,before draft day,0.01092896174863388,2.0.0

@@ -1,0 +1,339 @@
+{
+  "model_version": "1.1.0",
+  "parent_version": "1.0.0",
+  "random_seed": 20261110,
+  "created_by": "python -m src.modeling.career_production_v11",
+  "feature_sets": {
+    "pre_draft": [
+      "cmp__raw",
+      "ypa__raw",
+      "td__raw",
+      "int__raw",
+      "att_pg__raw",
+      "rush_pg__raw",
+      "opp_ypa__raw",
+      "sos__raw",
+      "talent_recruiting_4yr_pctile",
+      "age_at_draft",
+      "height_inches"
+    ],
+    "post_draft": [
+      "cmp__raw",
+      "ypa__raw",
+      "td__raw",
+      "int__raw",
+      "att_pg__raw",
+      "rush_pg__raw",
+      "opp_ypa__raw",
+      "sos__raw",
+      "talent_recruiting_4yr_pctile",
+      "age_at_draft",
+      "height_inches",
+      "log_overall_pick"
+    ]
+  },
+  "targets": [
+    "games_played",
+    "games_started",
+    "pass_attempts",
+    "pass_completions",
+    "pass_yards",
+    "pass_tds",
+    "interceptions",
+    "rush_attempts",
+    "rush_yards",
+    "rush_tds"
+  ],
+  "training_rows": 183,
+  "training_draft_classes": [
+    2005,
+    2006,
+    2007,
+    2008,
+    2009,
+    2010,
+    2011,
+    2012,
+    2013,
+    2014,
+    2015,
+    2016,
+    2017,
+    2018,
+    2019,
+    2020,
+    2021
+  ],
+  "what_changed_vs_v1.0.0": [
+    "player-level reference arrays (donor career paths, per-QB residuals) moved out of the joblib files into data/model_artifacts/qb_career_production/v1.1.0/reference_tables.npz (gitignored, SHA-256 pinned)",
+    "default five-season totals come from one direct-model family per feature set, chosen by inner chronological validation pooled over the ten targets",
+    "prediction intervals from one interval method per feature set, chosen the same way; only aggregate residual quantiles (or quantile-regression coefficients) are stored",
+    "start probabilities projected onto nested values: P(64+) <= P(32+) <= P(16+)",
+    "structured-simulation intervals recalibrated with inner-fold PIT levels",
+    "exploratory GBDT direct models dropped (never the default)"
+  ],
+  "v1.0.0_preserved": {
+    "path": "models/qb_career_production/v1.0.0",
+    "files_unchanged": true
+  },
+  "selection_rule": "pooled",
+  "reviewed_overrides": {
+    "pre_draft": {
+      "interval": "oof_scaled",
+      "automated_choice": "quantile_reg",
+      "reason": "automated final choice under-covered in every outer evaluation; replaced by the modal inner choice across outer folds (backtest-informed, toward wider intervals)"
+    }
+  },
+  "selection": {
+    "pre_draft": {
+      "games_played": {
+        "point": "poisson",
+        "interval": "oof_scaled",
+        "inner_folds": 4
+      },
+      "games_started": {
+        "point": "poisson",
+        "interval": "oof_scaled",
+        "inner_folds": 4
+      },
+      "pass_attempts": {
+        "point": "poisson",
+        "interval": "oof_scaled",
+        "inner_folds": 4
+      },
+      "pass_completions": {
+        "point": "poisson",
+        "interval": "oof_scaled",
+        "inner_folds": 4
+      },
+      "pass_yards": {
+        "point": "poisson",
+        "interval": "oof_scaled",
+        "inner_folds": 4
+      },
+      "pass_tds": {
+        "point": "poisson",
+        "interval": "oof_scaled",
+        "inner_folds": 4
+      },
+      "interceptions": {
+        "point": "poisson",
+        "interval": "oof_scaled",
+        "inner_folds": 4
+      },
+      "rush_attempts": {
+        "point": "poisson",
+        "interval": "oof_scaled",
+        "inner_folds": 4
+      },
+      "rush_yards": {
+        "point": "poisson",
+        "interval": "oof_scaled",
+        "inner_folds": 4
+      },
+      "rush_tds": {
+        "point": "poisson",
+        "interval": "oof_scaled",
+        "inner_folds": 4
+      }
+    },
+    "post_draft": {
+      "games_played": {
+        "point": "ridge",
+        "interval": "oof_scaled",
+        "inner_folds": 4
+      },
+      "games_started": {
+        "point": "ridge",
+        "interval": "oof_scaled",
+        "inner_folds": 4
+      },
+      "pass_attempts": {
+        "point": "ridge",
+        "interval": "oof_scaled",
+        "inner_folds": 4
+      },
+      "pass_completions": {
+        "point": "ridge",
+        "interval": "oof_scaled",
+        "inner_folds": 4
+      },
+      "pass_yards": {
+        "point": "ridge",
+        "interval": "oof_scaled",
+        "inner_folds": 4
+      },
+      "pass_tds": {
+        "point": "ridge",
+        "interval": "oof_scaled",
+        "inner_folds": 4
+      },
+      "interceptions": {
+        "point": "ridge",
+        "interval": "oof_scaled",
+        "inner_folds": 4
+      },
+      "rush_attempts": {
+        "point": "ridge",
+        "interval": "oof_scaled",
+        "inner_folds": 4
+      },
+      "rush_yards": {
+        "point": "ridge",
+        "interval": "oof_scaled",
+        "inner_folds": 4
+      },
+      "rush_tds": {
+        "point": "ridge",
+        "interval": "oof_scaled",
+        "inner_folds": 4
+      }
+    }
+  },
+  "measured_backtest": {
+    "backtest": "nested chronological, outer classes 2012-2021, five-season embargo",
+    "coverage_selected_intervals": {
+      "post_draft": {
+        "coverage50": 0.502,
+        "coverage80": 0.774,
+        "coverage90": 0.873
+      },
+      "pre_draft": {
+        "coverage50": 0.504,
+        "coverage80": 0.792,
+        "coverage90": 0.866
+      }
+    },
+    "coverage_by_target": {
+      "post_draft/games_played": {
+        "c50": 0.561,
+        "c80": 0.85,
+        "c90": 0.916
+      },
+      "post_draft/games_started": {
+        "c50": 0.505,
+        "c80": 0.804,
+        "c90": 0.879
+      },
+      "post_draft/interceptions": {
+        "c50": 0.589,
+        "c80": 0.841,
+        "c90": 0.888
+      },
+      "post_draft/pass_attempts": {
+        "c50": 0.467,
+        "c80": 0.804,
+        "c90": 0.888
+      },
+      "post_draft/pass_completions": {
+        "c50": 0.43,
+        "c80": 0.785,
+        "c90": 0.888
+      },
+      "post_draft/pass_tds": {
+        "c50": 0.523,
+        "c80": 0.748,
+        "c90": 0.888
+      },
+      "post_draft/pass_yards": {
+        "c50": 0.467,
+        "c80": 0.766,
+        "c90": 0.869
+      },
+      "post_draft/rush_attempts": {
+        "c50": 0.533,
+        "c80": 0.729,
+        "c90": 0.869
+      },
+      "post_draft/rush_tds": {
+        "c50": 0.43,
+        "c80": 0.682,
+        "c90": 0.804
+      },
+      "post_draft/rush_yards": {
+        "c50": 0.514,
+        "c80": 0.729,
+        "c90": 0.841
+      },
+      "pre_draft/games_played": {
+        "c50": 0.495,
+        "c80": 0.804,
+        "c90": 0.879
+      },
+      "pre_draft/games_started": {
+        "c50": 0.523,
+        "c80": 0.794,
+        "c90": 0.888
+      },
+      "pre_draft/interceptions": {
+        "c50": 0.617,
+        "c80": 0.85,
+        "c90": 0.907
+      },
+      "pre_draft/pass_attempts": {
+        "c50": 0.486,
+        "c80": 0.804,
+        "c90": 0.879
+      },
+      "pre_draft/pass_completions": {
+        "c50": 0.477,
+        "c80": 0.776,
+        "c90": 0.86
+      },
+      "pre_draft/pass_tds": {
+        "c50": 0.514,
+        "c80": 0.794,
+        "c90": 0.85
+      },
+      "pre_draft/pass_yards": {
+        "c50": 0.449,
+        "c80": 0.785,
+        "c90": 0.869
+      },
+      "pre_draft/rush_attempts": {
+        "c50": 0.458,
+        "c80": 0.757,
+        "c90": 0.85
+      },
+      "pre_draft/rush_tds": {
+        "c50": 0.533,
+        "c80": 0.757,
+        "c90": 0.813
+      },
+      "pre_draft/rush_yards": {
+        "c50": 0.486,
+        "c80": 0.794,
+        "c90": 0.869
+      }
+    },
+    "pre_draft_coverage_source": "outer coverage of oof_scaled used for every fold (the shipped method)"
+  },
+  "artifacts": [
+    "post_draft.joblib",
+    "pre_draft.joblib",
+    "metadata.json"
+  ],
+  "artifact_sha256": {
+    "pre_draft.joblib": "197228211695a206bcef9581b0f79f96f5e4039a18144d99aff951a9faf62610",
+    "post_draft.joblib": "edc02cbfc88fc48c6211a7121ac08d2cc64c13b046ade11dc8fab881f701b6ae"
+  },
+  "external_data_files": [
+    {
+      "role": "reference_tables",
+      "path": "data/model_artifacts/qb_career_production/v1.1.0/reference_tables.npz",
+      "sha256": "d117866bec145e73626f111d80f5cc98d25415118388181f98bbd9aaacdca8ff",
+      "regenerate": "python -m src.modeling.career_production_v11 (into a new version directory)",
+      "reason": "player-level NFL career lines and residuals used by the structured simulation; kept out of Git"
+    }
+  ],
+  "package_versions": {
+    "python": "3.14.6",
+    "platform": "Windows-11-10.0.26200-SP0",
+    "numpy": "2.5.2",
+    "pandas": "3.1.0",
+    "scikit-learn": "1.9.1",
+    "scipy": "1.18.1",
+    "joblib": "1.6.0",
+    "matplotlib": "3.11.2"
+  }
+}

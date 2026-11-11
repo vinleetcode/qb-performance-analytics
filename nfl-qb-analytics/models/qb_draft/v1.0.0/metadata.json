@@ -1,0 +1,175 @@
+{
+  "model_version": "1.0.0",
+  "random_seed": 20261110,
+  "population_rule": {
+    "min_final_attempts": 100,
+    "fbs_final_season": true,
+    "verified_final_season": "no later CFBD presence; final seasons <= 2024",
+    "min_years_since_hs_class": 4,
+    "label": "drafted in the next draft, any position"
+  },
+  "features": {
+    "college": [
+      "completion_pct",
+      "yards_per_attempt",
+      "td_pct",
+      "int_pct",
+      "attempts_per_game",
+      "log_attempts",
+      "opp_adj_ypa",
+      "sos_pass_defense",
+      "rush_ypg_last3",
+      "n_seasons_100att",
+      "ypa_change_vs_prior",
+      "recruit_rating",
+      "years_since_hs",
+      "n_seasons_present",
+      "height_inches",
+      "weight_lbs",
+      "team_recruiting_pctile",
+      "power_conference",
+      "team_win_pct"
+    ],
+    "combine": [
+      "combine_invited",
+      "combine_forty",
+      "combine_height_inches",
+      "combine_weight_lbs"
+    ],
+    "round_pick": [
+      "completion_pct",
+      "yards_per_attempt",
+      "td_pct",
+      "int_pct",
+      "attempts_per_game",
+      "log_attempts",
+      "opp_adj_ypa",
+      "sos_pass_defense",
+      "rush_ypg_last3",
+      "n_seasons_100att",
+      "ypa_change_vs_prior",
+      "recruit_rating",
+      "height_inches",
+      "weight_lbs",
+      "team_recruiting_pctile",
+      "power_conference",
+      "team_win_pct",
+      "age_at_draft",
+      "combine_forty",
+      "combine_height_inches",
+      "combine_weight_lbs"
+    ]
+  },
+  "training": {
+    "probability_rows": 556,
+    "probability_draft_years": [
+      2008,
+      2009,
+      2010,
+      2011,
+      2012,
+      2013,
+      2014,
+      2015,
+      2016,
+      2017,
+      2018,
+      2019,
+      2020,
+      2021,
+      2022,
+      2023,
+      2024,
+      2025
+    ],
+    "round_rows": 242,
+    "round_draft_years": [
+      2005,
+      2006,
+      2007,
+      2008,
+      2009,
+      2010,
+      2011,
+      2012,
+      2013,
+      2014,
+      2015,
+      2016,
+      2017,
+      2018,
+      2019,
+      2020,
+      2021,
+      2022,
+      2023,
+      2024,
+      2025,
+      2026
+    ]
+  },
+  "backtest": {
+    "probability_test_years": [
+      2014,
+      2015,
+      2016,
+      2017,
+      2018,
+      2019,
+      2020,
+      2021,
+      2022,
+      2023,
+      2024,
+      2025
+    ],
+    "round_test_years": [
+      2012,
+      2013,
+      2014,
+      2015,
+      2016,
+      2017,
+      2018,
+      2019,
+      2020,
+      2021,
+      2022,
+      2023,
+      2024,
+      2025,
+      2026
+    ],
+    "label_lag_years": 1
+  },
+  "artifacts": [
+    "prob_college_combine_l2.joblib",
+    "prob_college_l2.joblib",
+    "round_pick.joblib",
+    "metadata.json"
+  ],
+  "artifact_sha256": {
+    "prob_college_l2.joblib": "2b7148ba4a6257f39433f61386676fc7492f90c4d92f265fad0ec8efd02e72e9",
+    "prob_college_combine_l2.joblib": "35c6b1e30991f43cf53d57728de9767d3c575afb98dc64706b46c1e8d580a34a",
+    "round_pick.joblib": "660add757c1d0184212906b2f5488a9820528578aca8bef64fb3e014acba5257"
+  },
+  "external_data_files": [
+    {
+      "role": "draft_universe",
+      "path": "data/modeling/draft_universe_v5.0.0.parquet",
+      "sha256": "1403cf0c795ceec0e3918a16d15e1503332bb9fc9ed32f188503115cf1353399",
+      "regenerate": "python -m src.modeling.draft_predictor",
+      "reason": "player-level CFBD-derived data; kept out of Git"
+    }
+  ],
+  "package_versions": {
+    "python": "3.14.6",
+    "platform": "Windows-11-10.0.26200-SP0",
+    "numpy": "2.5.2",
+    "pandas": "3.1.0",
+    "scikit-learn": "1.9.1",
+    "scipy": "1.18.1",
+    "joblib": "1.6.0",
+    "matplotlib": "3.11.2"
+  }
+}

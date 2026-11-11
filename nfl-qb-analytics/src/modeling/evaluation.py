@@ -1,6 +1,6 @@
 """Reusable evaluation and uncertainty utilities. These compute metrics for
-whatever predictions they are given; this project has NOT trained final models
-yet, so no accuracy claim should be inferred from this module's existence.
+whatever predictions they are given. Model results live in
+reports/model_evaluation.md (computed by src/modeling/evaluate.py).
 
 Classification: Brier score, log loss, ROC-AUC, calibration curve (reliability
 table), expected calibration error, reliability diagram.

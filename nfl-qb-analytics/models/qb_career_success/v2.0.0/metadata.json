@@ -1,0 +1,302 @@
+{
+  "model_version": "2.0.0",
+  "created": "2026-11-10",
+  "random_seed": 20261110,
+  "selected_configuration": {
+    "name": "raw|context|l2",
+    "strategy": "raw",
+    "level": "context",
+    "family": "l2",
+    "features": [
+      "cmp__raw",
+      "ypa__raw",
+      "td__raw",
+      "int__raw",
+      "att_pg__raw",
+      "rush_pg__raw",
+      "opp_ypa__raw",
+      "sos__raw",
+      "talent_recruiting_4yr_pctile",
+      "age_at_draft",
+      "height_inches"
+    ],
+    "selected_on": "pooled Brier, embargoed development folds 2012-2018",
+    "simplicity_tolerance_brier": 0.002
+  },
+  "target": "career_success = nfl_starts_first_5_seasons >= 32 (thresholds 16-64 evaluated as sensitivity)",
+  "training_draft_classes": [
+    2005,
+    2006,
+    2007,
+    2008,
+    2009,
+    2010,
+    2011,
+    2012,
+    2013,
+    2014,
+    2015,
+    2016,
+    2017,
+    2018,
+    2019,
+    2020,
+    2021
+  ],
+  "training_rows": 183,
+  "training_positive": 51,
+  "development_test_classes": [
+    2012,
+    2013,
+    2014,
+    2015,
+    2016,
+    2017,
+    2018
+  ],
+  "holdout_classes": [
+    2019,
+    2020,
+    2021
+  ],
+  "holdout_rows": 31,
+  "label_embargo_years": 5,
+  "training_cutoff": {
+    "latest_draft_class": 2021,
+    "outcomes_observed_through": "2025 NFL regular season",
+    "features_available_by": "draft day of each class"
+  },
+  "normalization": {
+    "version": "2.0.0",
+    "fbs_team_season": true,
+    "min_attempts": 100,
+    "min_games_with_pass_attempt": 4,
+    "weighting": "unweighted",
+    "conference_min_group": 6,
+    "z_clip": 4.0,
+    "prospect_min_attempts": 50,
+    "methods": [
+      "season_z",
+      "season_pct",
+      "conf_z"
+    ],
+    "combo_choice": {
+      "cmp": "season_z",
+      "ypa": "season_z",
+      "td": "raw",
+      "int": "season_z",
+      "att_pg": "raw",
+      "rush_pg": "raw",
+      "opp_ypa": "season_z",
+      "sos": "raw"
+    },
+    "baselines_file": "data/model_artifacts/qb_career_success/v2.0.0/college_season_baselines_v2.0.0.parquet",
+    "reference_population_file": "data/model_artifacts/qb_career_success/v2.0.0/college_reference_population_v2.0.0.parquet"
+  },
+  "dataset": {
+    "version": "2.0.0",
+    "files": {
+      "qb_success_features_v2.0.0.parquet": "3c3f493f76e6de30a7166684178b17a10929e81ed4a48f7d827bc62734745eaa",
+      "qb_success_targets_v2.0.0.parquet": "c17c225b7611c165c6e1be0d23f72e0759bf2dd3188b4090bf5d6cc6627a1daf",
+      "college_season_baselines_v2.0.0.parquet": "f4ee840291c67ec88088fd2b34a224d2894613ea7e3d9547a3fcc9dbae5d5a64",
+      "college_reference_population_v2.0.0.parquet": "ba1fd62804de114d7eeb5b1a6674d774388f5da1bba1d13dbc3b5034357b29d3"
+    }
+  },
+  "feature_sets": {
+    "raw_v1|basic": [
+      "final_completion_pct",
+      "final_yards_per_attempt",
+      "final_td_pct",
+      "final_int_pct",
+      "log_career_pass_attempts",
+      "career_rush_yards"
+    ],
+    "raw_v1|context": [
+      "final_completion_pct",
+      "final_yards_per_attempt",
+      "final_td_pct",
+      "final_int_pct",
+      "log_career_pass_attempts",
+      "career_rush_yards",
+      "final_opp_adj_ypa",
+      "final_sos_pass_defense",
+      "talent_recruiting_4yr_pctile",
+      "age_at_draft",
+      "height_inches"
+    ],
+    "raw|basic": [
+      "cmp__raw",
+      "ypa__raw",
+      "td__raw",
+      "int__raw",
+      "att_pg__raw",
+      "rush_pg__raw"
+    ],
+    "raw|context": [
+      "cmp__raw",
+      "ypa__raw",
+      "td__raw",
+      "int__raw",
+      "att_pg__raw",
+      "rush_pg__raw",
+      "opp_ypa__raw",
+      "sos__raw",
+      "talent_recruiting_4yr_pctile",
+      "age_at_draft",
+      "height_inches"
+    ],
+    "season_z|basic": [
+      "cmp__season_z",
+      "ypa__season_z",
+      "td__season_z",
+      "int__season_z",
+      "att_pg__season_z",
+      "rush_pg__season_z"
+    ],
+    "season_z|context": [
+      "cmp__season_z",
+      "ypa__season_z",
+      "td__season_z",
+      "int__season_z",
+      "att_pg__season_z",
+      "rush_pg__season_z",
+      "opp_ypa__season_z",
+      "sos__season_z",
+      "talent_recruiting_4yr_pctile",
+      "age_at_draft",
+      "height_inches"
+    ],
+    "season_pct|basic": [
+      "cmp__season_pct",
+      "ypa__season_pct",
+      "td__season_pct",
+      "int__season_pct",
+      "att_pg__season_pct",
+      "rush_pg__season_pct"
+    ],
+    "season_pct|context": [
+      "cmp__season_pct",
+      "ypa__season_pct",
+      "td__season_pct",
+      "int__season_pct",
+      "att_pg__season_pct",
+      "rush_pg__season_pct",
+      "opp_ypa__season_pct",
+      "sos__season_pct",
+      "talent_recruiting_4yr_pctile",
+      "age_at_draft",
+      "height_inches"
+    ],
+    "conf_z|basic": [
+      "cmp__conf_z",
+      "ypa__conf_z",
+      "td__conf_z",
+      "int__conf_z",
+      "att_pg__conf_z",
+      "rush_pg__conf_z"
+    ],
+    "conf_z|context": [
+      "cmp__conf_z",
+      "ypa__conf_z",
+      "td__conf_z",
+      "int__conf_z",
+      "att_pg__conf_z",
+      "rush_pg__conf_z",
+      "opp_ypa__conf_z",
+      "sos__conf_z",
+      "talent_recruiting_4yr_pctile",
+      "age_at_draft",
+      "height_inches"
+    ],
+    "combo|basic": [
+      "cmp__season_z",
+      "ypa__season_z",
+      "td__raw",
+      "int__season_z",
+      "att_pg__raw",
+      "rush_pg__raw"
+    ],
+    "combo|context": [
+      "cmp__season_z",
+      "ypa__season_z",
+      "td__raw",
+      "int__season_z",
+      "att_pg__raw",
+      "rush_pg__raw",
+      "opp_ypa__season_z",
+      "sos__raw",
+      "talent_recruiting_4yr_pctile",
+      "age_at_draft",
+      "height_inches"
+    ]
+  },
+  "model_params": {
+    "C": 0.5,
+    "class_weight": null,
+    "dual": false,
+    "fit_intercept": true,
+    "intercept_scaling": 1,
+    "l1_ratio": 0.0,
+    "max_iter": 5000,
+    "n_jobs": null,
+    "penalty": "deprecated",
+    "random_state": null,
+    "solver": "lbfgs",
+    "tol": 0.0001,
+    "verbose": 0,
+    "warm_start": false
+  },
+  "preference_rule": "v2 preferred over v1 only if holdout (retrospective) Brier AND log loss are both lower than v1 B_context_l2",
+  "v1_reference": {
+    "model_version": "1.0.0",
+    "dir": "models\\qb_career_success\\v1.0.0"
+  },
+  "package_versions": {
+    "python": "3.14.6",
+    "platform": "Windows-11-10.0.26200-SP0",
+    "numpy": "2.5.2",
+    "pandas": "3.1.0",
+    "scikit-learn": "1.9.1",
+    "scipy": "1.18.1",
+    "joblib": "1.6.0",
+    "matplotlib": "3.11.2"
+  },
+  "artifacts": [
+    "historical_selected.joblib",
+    "playtype_stage2.joblib",
+    "metadata.json"
+  ],
+  "external_data_files": [
+    {
+      "role": "reference_population",
+      "path": "data/model_artifacts/qb_career_success/v2.0.0/college_reference_population_v2.0.0.parquet",
+      "sha256": "ba1fd62804de114d7eeb5b1a6674d774388f5da1bba1d13dbc3b5034357b29d3",
+      "regenerate": "python -m src.modeling.build_dataset_v2 (writes data/modeling/college_reference_population_v2.0.0.parquet)",
+      "reason": "player-level data derived from CFBD; kept out of Git"
+    },
+    {
+      "role": "season_baselines",
+      "path": "data/model_artifacts/qb_career_success/v2.0.0/college_season_baselines_v2.0.0.parquet",
+      "sha256": "f4ee840291c67ec88088fd2b34a224d2894613ea7e3d9547a3fcc9dbae5d5a64",
+      "regenerate": "python -m src.modeling.build_dataset_v2 (writes data/modeling/college_season_baselines_v2.0.0.parquet)",
+      "reason": "player-level data derived from CFBD; kept out of Git"
+    },
+    {
+      "role": "reproducibility_check",
+      "path": "data/model_artifacts/qb_career_success/v2.0.0/reproducibility_check.csv",
+      "sha256": "55288effbabd611e2433c1e8577a7e96c66c6c402f1a053b9f3260c802d31db3",
+      "regenerate": "python -m src.modeling.train_v2 (retrains v2 into a new directory; do not overwrite v2.0.0)",
+      "reason": "player-level data derived from CFBD; kept out of Git"
+    }
+  ],
+  "artifact_sha256": {
+    "historical_selected.joblib": "8b9d38adef24a05ceb3154b19606a7414939b41033508434a90b69159bad8cae",
+    "playtype_stage2.joblib": "8772c9b1d686da0f2c2915854be1b76b68cda95c9cc08fc4e2be33e3651052ab"
+  },
+  "metadata_revisions": [
+    {
+      "date": "2026-11-10",
+      "change": "moved CFBD-derived parquet/csv files to data/model_artifacts (gitignored); joblib artifacts byte-identical (artifact_sha256)"
+    }
+  ]
+}

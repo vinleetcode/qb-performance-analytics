@@ -1,9 +1,49 @@
+# Python / tooling
 .venv/
 __pycache__/
-.pytest_cache/
-data/
-results/
 *.pyc
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.ipynb_checkpoints/
+.cache/
+*.log
+
+# Credentials (never commit; .env.example is the template)
 .env
 .env.*
 !.env.example
+*.pem
+*.key
+credentials*.json
+secrets*.json
+
+# Local data: raw downloads, caches, the SQLite database, derived datasets
+data/
+*.db
+*.sqlite
+*.sqlite3
+*.db-journal
+
+# Derived datasets anywhere in the tree (CFBD/nflverse-derived player-level data is not
+# redistributed; model metadata lists the regenerable data files under data/model_artifacts/)
+*.parquet
+*.feather
+models/**/*.csv
+
+# Generated results (re-created by the pipelines)
+results/
+*.npz
+
+# Model files that embed player-level training data (NFL career lines, per-QB residuals).
+# Kept locally and unchanged for reproducibility; superseded for distribution by
+# models/qb_career_production/v1.1.0 (parameters only). See reports/phase5_5_audit.md.
+models/qb_career_production/v1.0.0/*.joblib
+
+# Phase 6A additions
+*.py[cod]
+venv/
+.streamlit/secrets.toml
+.claude/
+# serving bundle archives (player-level data; shipped with a deployment, never committed)
+dist/

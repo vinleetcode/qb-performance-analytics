@@ -1,0 +1,17 @@
+# Production (inference-only) dependencies for the FastAPI backend.
+# Versions are pinned to the environment the model artifacts were trained and pickled in
+# (see "package_versions" in each models/**/metadata.json): scikit-learn/numpy/scipy pickles are not
+# guaranteed to load correctly under other versions. Python 3.14.
+fastapi==0.115.8
+starlette==0.45.3
+uvicorn==0.34.0
+pydantic==2.12.5
+numpy==2.5.2
+pandas==3.1.0
+scipy==1.18.1
+scikit-learn==1.9.1
+joblib==1.6.0
+pyarrow==26.0.0
+# imported (never called during inference) by shared project modules
+requests>=2.31
+python-dotenv>=1.0

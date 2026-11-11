@@ -1,0 +1,462 @@
+{
+  "model_version": "1.0.0",
+  "created": "2026-11-10",
+  "random_seed": 20261110,
+  "target": "career_success = nfl_starts_first_5_seasons >= 32",
+  "training_rows": 53,
+  "training_positive": 19,
+  "training_draft_classes": [
+    2017,
+    2018,
+    2019,
+    2020,
+    2021
+  ],
+  "training_cutoff": {
+    "latest_draft_class": 2021,
+    "outcomes_observed_through": "2025 NFL regular season",
+    "features_available_by": "draft day of each class (pre-draft college/combine data only)"
+  },
+  "dataset": {
+    "dataset_version": "1.0.0",
+    "observation_end_season": 2025,
+    "files": {
+      "qb_success_features_v1.0.0.parquet": "b133e893133890e3194752f974ad94424ed59c68e54658b47346dc1ab36ff3fc",
+      "qb_success_targets_v1.0.0.parquet": "de15392283a396b9c51221bca03bc18169d605653c4d912e40b4dee6d2714a0b"
+    }
+  },
+  "feature_schema": {
+    "A_basic": [
+      "final_completion_pct",
+      "final_yards_per_attempt",
+      "final_td_pct",
+      "final_int_pct",
+      "log_career_pass_attempts",
+      "career_rush_yards"
+    ],
+    "B_context": [
+      "final_completion_pct",
+      "final_yards_per_attempt",
+      "final_td_pct",
+      "final_int_pct",
+      "log_career_pass_attempts",
+      "career_rush_yards",
+      "final_opp_adj_ypa",
+      "final_sos_pass_defense",
+      "talent_recruiting_4yr_pctile",
+      "age_at_draft",
+      "height_inches"
+    ],
+    "C_playtype": [
+      "final_completion_pct",
+      "final_yards_per_attempt",
+      "final_td_pct",
+      "final_int_pct",
+      "log_career_pass_attempts",
+      "career_rush_yards",
+      "final_opp_adj_ypa",
+      "final_sos_pass_defense",
+      "talent_recruiting_4yr_pctile",
+      "age_at_draft",
+      "height_inches",
+      "pt_standard_down_pass_rate",
+      "pt_passing_down_pass_rate",
+      "pt_explosive_pass_rate",
+      "pt_sack_rate",
+      "pt_plays_per_game"
+    ],
+    "draft_reference": [
+      "log_overall_pick"
+    ]
+  },
+  "feature_version": "1.0.0",
+  "validation": {
+    "scheme": "rolling-origin by draft class",
+    "test_years": [
+      2019,
+      2020,
+      2021
+    ],
+    "hyperparameters": "pre-specified; no tuning on holdout data",
+    "threshold_rule": "training-fold success rate"
+  },
+  "models": {
+    "prior_rate": {
+      "file": "prior_rate.joblib",
+      "feature_set": "A_basic",
+      "features": [
+        "final_completion_pct",
+        "final_yards_per_attempt",
+        "final_td_pct",
+        "final_int_pct",
+        "log_career_pass_attempts",
+        "career_rush_yards"
+      ],
+      "role": "Baseline A: training success rate",
+      "params": {
+        "constant": null,
+        "random_state": null,
+        "strategy": "prior"
+      }
+    },
+    "A_basic_l2": {
+      "file": "A_basic_l2.joblib",
+      "feature_set": "A_basic",
+      "features": [
+        "final_completion_pct",
+        "final_yards_per_attempt",
+        "final_td_pct",
+        "final_int_pct",
+        "log_career_pass_attempts",
+        "career_rush_yards"
+      ],
+      "role": "Baseline B / Model A: basic college stats, L2 logistic",
+      "params": {
+        "C": 0.5,
+        "class_weight": null,
+        "dual": false,
+        "fit_intercept": true,
+        "intercept_scaling": 1,
+        "l1_ratio": 0.0,
+        "max_iter": 5000,
+        "n_jobs": null,
+        "penalty": "deprecated",
+        "random_state": null,
+        "solver": "lbfgs",
+        "tol": 0.0001,
+        "verbose": 0,
+        "warm_start": false
+      }
+    },
+    "B_context_l2": {
+      "file": "B_context_l2.joblib",
+      "feature_set": "B_context",
+      "features": [
+        "final_completion_pct",
+        "final_yards_per_attempt",
+        "final_td_pct",
+        "final_int_pct",
+        "log_career_pass_attempts",
+        "career_rush_yards",
+        "final_opp_adj_ypa",
+        "final_sos_pass_defense",
+        "talent_recruiting_4yr_pctile",
+        "age_at_draft",
+        "height_inches"
+      ],
+      "role": "Baseline C / Model B: + opponent/team context, L2 logistic",
+      "params": {
+        "C": 0.5,
+        "class_weight": null,
+        "dual": false,
+        "fit_intercept": true,
+        "intercept_scaling": 1,
+        "l1_ratio": 0.0,
+        "max_iter": 5000,
+        "n_jobs": null,
+        "penalty": "deprecated",
+        "random_state": null,
+        "solver": "lbfgs",
+        "tol": 0.0001,
+        "verbose": 0,
+        "warm_start": false
+      }
+    },
+    "C_playtype_l2": {
+      "file": "C_playtype_l2.joblib",
+      "feature_set": "C_playtype",
+      "features": [
+        "final_completion_pct",
+        "final_yards_per_attempt",
+        "final_td_pct",
+        "final_int_pct",
+        "log_career_pass_attempts",
+        "career_rush_yards",
+        "final_opp_adj_ypa",
+        "final_sos_pass_defense",
+        "talent_recruiting_4yr_pctile",
+        "age_at_draft",
+        "height_inches",
+        "pt_standard_down_pass_rate",
+        "pt_passing_down_pass_rate",
+        "pt_explosive_pass_rate",
+        "pt_sack_rate",
+        "pt_plays_per_game"
+      ],
+      "role": "Model C: + play-type profile, L2 logistic",
+      "params": {
+        "C": 0.5,
+        "class_weight": null,
+        "dual": false,
+        "fit_intercept": true,
+        "intercept_scaling": 1,
+        "l1_ratio": 0.0,
+        "max_iter": 5000,
+        "n_jobs": null,
+        "penalty": "deprecated",
+        "random_state": null,
+        "solver": "lbfgs",
+        "tol": 0.0001,
+        "verbose": 0,
+        "warm_start": false
+      }
+    },
+    "A_basic_enet": {
+      "file": "A_basic_enet.joblib",
+      "feature_set": "A_basic",
+      "features": [
+        "final_completion_pct",
+        "final_yards_per_attempt",
+        "final_td_pct",
+        "final_int_pct",
+        "log_career_pass_attempts",
+        "career_rush_yards"
+      ],
+      "role": "elastic-net logistic",
+      "params": {
+        "C": 0.5,
+        "class_weight": null,
+        "dual": false,
+        "fit_intercept": true,
+        "intercept_scaling": 1,
+        "l1_ratio": 0.5,
+        "max_iter": 20000,
+        "n_jobs": null,
+        "penalty": "deprecated",
+        "random_state": 20261110,
+        "solver": "saga",
+        "tol": 0.0001,
+        "verbose": 0,
+        "warm_start": false
+      }
+    },
+    "B_context_enet": {
+      "file": "B_context_enet.joblib",
+      "feature_set": "B_context",
+      "features": [
+        "final_completion_pct",
+        "final_yards_per_attempt",
+        "final_td_pct",
+        "final_int_pct",
+        "log_career_pass_attempts",
+        "career_rush_yards",
+        "final_opp_adj_ypa",
+        "final_sos_pass_defense",
+        "talent_recruiting_4yr_pctile",
+        "age_at_draft",
+        "height_inches"
+      ],
+      "role": "elastic-net logistic",
+      "params": {
+        "C": 0.5,
+        "class_weight": null,
+        "dual": false,
+        "fit_intercept": true,
+        "intercept_scaling": 1,
+        "l1_ratio": 0.5,
+        "max_iter": 20000,
+        "n_jobs": null,
+        "penalty": "deprecated",
+        "random_state": 20261110,
+        "solver": "saga",
+        "tol": 0.0001,
+        "verbose": 0,
+        "warm_start": false
+      }
+    },
+    "C_playtype_enet": {
+      "file": "C_playtype_enet.joblib",
+      "feature_set": "C_playtype",
+      "features": [
+        "final_completion_pct",
+        "final_yards_per_attempt",
+        "final_td_pct",
+        "final_int_pct",
+        "log_career_pass_attempts",
+        "career_rush_yards",
+        "final_opp_adj_ypa",
+        "final_sos_pass_defense",
+        "talent_recruiting_4yr_pctile",
+        "age_at_draft",
+        "height_inches",
+        "pt_standard_down_pass_rate",
+        "pt_passing_down_pass_rate",
+        "pt_explosive_pass_rate",
+        "pt_sack_rate",
+        "pt_plays_per_game"
+      ],
+      "role": "elastic-net logistic",
+      "params": {
+        "C": 0.5,
+        "class_weight": null,
+        "dual": false,
+        "fit_intercept": true,
+        "intercept_scaling": 1,
+        "l1_ratio": 0.5,
+        "max_iter": 20000,
+        "n_jobs": null,
+        "penalty": "deprecated",
+        "random_state": 20261110,
+        "solver": "saga",
+        "tol": 0.0001,
+        "verbose": 0,
+        "warm_start": false
+      }
+    },
+    "A_basic_gbdt": {
+      "file": "A_basic_gbdt.joblib",
+      "feature_set": "A_basic",
+      "features": [
+        "final_completion_pct",
+        "final_yards_per_attempt",
+        "final_td_pct",
+        "final_int_pct",
+        "log_career_pass_attempts",
+        "career_rush_yards"
+      ],
+      "role": "gradient-boosted trees (exploratory)",
+      "params": {
+        "ccp_alpha": 0.0,
+        "criterion": "deprecated",
+        "init": null,
+        "learning_rate": 0.05,
+        "loss": "log_loss",
+        "max_depth": 2,
+        "max_features": null,
+        "max_leaf_nodes": null,
+        "min_impurity_decrease": 0.0,
+        "min_samples_leaf": 4,
+        "min_samples_split": 2,
+        "min_weight_fraction_leaf": 0.0,
+        "n_estimators": 100,
+        "n_iter_no_change": null,
+        "random_state": 20261110,
+        "subsample": 0.8,
+        "tol": 0.0001,
+        "validation_fraction": 0.1,
+        "verbose": 0,
+        "warm_start": false
+      }
+    },
+    "B_context_gbdt": {
+      "file": "B_context_gbdt.joblib",
+      "feature_set": "B_context",
+      "features": [
+        "final_completion_pct",
+        "final_yards_per_attempt",
+        "final_td_pct",
+        "final_int_pct",
+        "log_career_pass_attempts",
+        "career_rush_yards",
+        "final_opp_adj_ypa",
+        "final_sos_pass_defense",
+        "talent_recruiting_4yr_pctile",
+        "age_at_draft",
+        "height_inches"
+      ],
+      "role": "gradient-boosted trees (exploratory)",
+      "params": {
+        "ccp_alpha": 0.0,
+        "criterion": "deprecated",
+        "init": null,
+        "learning_rate": 0.05,
+        "loss": "log_loss",
+        "max_depth": 2,
+        "max_features": null,
+        "max_leaf_nodes": null,
+        "min_impurity_decrease": 0.0,
+        "min_samples_leaf": 4,
+        "min_samples_split": 2,
+        "min_weight_fraction_leaf": 0.0,
+        "n_estimators": 100,
+        "n_iter_no_change": null,
+        "random_state": 20261110,
+        "subsample": 0.8,
+        "tol": 0.0001,
+        "validation_fraction": 0.1,
+        "verbose": 0,
+        "warm_start": false
+      }
+    },
+    "C_playtype_gbdt": {
+      "file": "C_playtype_gbdt.joblib",
+      "feature_set": "C_playtype",
+      "features": [
+        "final_completion_pct",
+        "final_yards_per_attempt",
+        "final_td_pct",
+        "final_int_pct",
+        "log_career_pass_attempts",
+        "career_rush_yards",
+        "final_opp_adj_ypa",
+        "final_sos_pass_defense",
+        "talent_recruiting_4yr_pctile",
+        "age_at_draft",
+        "height_inches",
+        "pt_standard_down_pass_rate",
+        "pt_passing_down_pass_rate",
+        "pt_explosive_pass_rate",
+        "pt_sack_rate",
+        "pt_plays_per_game"
+      ],
+      "role": "gradient-boosted trees (exploratory)",
+      "params": {
+        "ccp_alpha": 0.0,
+        "criterion": "deprecated",
+        "init": null,
+        "learning_rate": 0.05,
+        "loss": "log_loss",
+        "max_depth": 2,
+        "max_features": null,
+        "max_leaf_nodes": null,
+        "min_impurity_decrease": 0.0,
+        "min_samples_leaf": 4,
+        "min_samples_split": 2,
+        "min_weight_fraction_leaf": 0.0,
+        "n_estimators": 100,
+        "n_iter_no_change": null,
+        "random_state": 20261110,
+        "subsample": 0.8,
+        "tol": 0.0001,
+        "validation_fraction": 0.1,
+        "verbose": 0,
+        "warm_start": false
+      }
+    },
+    "draft_reference_l2": {
+      "file": "draft_reference_l2.joblib",
+      "feature_set": "draft_reference",
+      "features": [
+        "log_overall_pick"
+      ],
+      "role": "REFERENCE only: log(draft pick); uses draft-day information",
+      "params": {
+        "C": 0.5,
+        "class_weight": null,
+        "dual": false,
+        "fit_intercept": true,
+        "intercept_scaling": 1,
+        "l1_ratio": 0.0,
+        "max_iter": 5000,
+        "n_jobs": null,
+        "penalty": "deprecated",
+        "random_state": null,
+        "solver": "lbfgs",
+        "tol": 0.0001,
+        "verbose": 0,
+        "warm_start": false
+      }
+    }
+  },
+  "package_versions": {
+    "python": "3.14.6",
+    "platform": "Windows-11-10.0.26200-SP0",
+    "numpy": "2.5.2",
+    "pandas": "3.1.0",
+    "scikit-learn": "1.9.1",
+    "scipy": "1.18.1",
+    "joblib": "1.6.0",
+    "matplotlib": "3.11.2"
+  },
+  "format": "joblib dict {pipeline, features, model_name, model_version, threshold}; load with joblib of the same sklearn version"
+}

@@ -14,6 +14,9 @@ structures. The phases build on each other, and none of them modifies the data o
 | 1 | All-time NFL QB database (1999-2025 ingested; earlier gaps documented) | `python -m src.historical_pipeline` |
 | 2 | NFL draft board + CFBD college stats + identity matching | `python -m src.prospect_pipeline` |
 | 3 | Advanced college features, environment, combine, NFL targets, survival, similarity, draft-value prep | `python -m src.advanced_pipeline` |
+| Model v1 | Career-success model (32+ starts in 5 seasons), basic vs context vs play-type comparison | `python -m src.modeling.train` |
+| Model v2 (Phase 4) | Era normalization study + historical (2005-2021) training, label-availability embargo | `python -m src.modeling.train_v2` |
+| Phase 5 | Draft projection, five-season stat forecasts, prospect comps, career trajectories, integrated forecast | `python -m src.modeling.forecast` |
 
 Phase 3 coverage, validation and limitations: **[`reports/advanced_features_coverage.md`](reports/advanced_features_coverage.md)**.
 
@@ -478,3 +481,178 @@ Three evidence tiers are kept apart and never merged:
 - **Not used:** the suggested `deepmetricanalytics.com` scheme page is a 2026 preview with no per-team citations, so it covers none of these seasons.
 - **Outputs:** `data/processed/college_offensive_schemes.parquet`, `qb_scheme_features.parquet`, `qb_scheme_seasons.parquet` and `offensive_scheme_labels_all.parquet`. In the database: `cfb_offensive_scheme_labels` and `cfb_team_season_schemes`. Feature version `3.1.0` in `prospect_feature_values`.
 - **Run:** `python -m src.advanced_pipeline` (the scheme step is part of it), then `pytest --junitxml=results/junit.xml`, then `python -m src.scheme_report`.
+
+## Career-success model v1 (32+ NFL starts in the first five seasons)
+
+Results: **[`reports/model_evaluation.md`](reports/model_evaluation.md)**. Data audit: [`reports/model_training_readiness.md`](reports/model_training_readiness.md).
+Feature dictionary: [`reports/model_feature_dictionary.csv`](reports/model_feature_dictionary.csv).
+
+```bash
+python -m src.modeling.build_dataset   # one row per drafted QB + separate target table (no network calls)
+python -m src.modeling.train           # rolling-origin validation by draft class + final models
+python -m src.modeling.evaluate        # metrics with bootstrap CIs, paired comparisons, figures, report
+python -m src.modeling.predict         # score the censored 2022-2026 classes (not evaluable yet)
+python -m pytest -q
+```
+
+* **Target:** regular-season starts from the nflverse schedule's starting-QB fields, NFL seasons `draft_year`
+  through `draft_year + 4`. Incomplete windows are NA (censored), never failures. A QB with no NFL record counts
+  as 0 starts only when the draft board confirms he never played.
+* **Sample:** the 2017-2021 classes, whose final college season is inside the 2016-2025 play-by-play data and
+  whose five-season windows are complete. That is 57 eligible QBs. The 53 with play-type features form the
+  same-QB comparison cohort (19 successes).
+* **Models (all sklearn Pipelines with train-only preprocessing):**
+  * Base rate.
+  * A: basic college stats (6 features).
+  * B: + opponent and team context (11).
+  * C: + play-type profile (16).
+  * The A/B/C sets are each fit as L2, elastic-net and shallow gradient-boosted models.
+  * A draft-pick reference model, which is not a college model.
+  * Hyperparameters are pre-specified and the decision threshold is the training success rate.
+* **Validation:** 2019, 2020 and 2021 are each predicted from the earlier classes only, giving 31 out-of-sample QBs.
+* **Findings:**
+  * College stats carry signal: model B reaches AUC 0.886 [0.759, 0.982].
+  * Detailed play types gave **no detectable improvement** over model B.
+  * Draft position is the strongest single predictor.
+  * Intervals are wide at this sample size. See the report for limitations.
+* **Artifacts:**
+  * `models/qb_career_success/v1.0.0/*.joblib`, with `metadata.json` recording the training cutoff, dataset
+    hashes, feature schema, parameters, seed and package versions.
+  * The out-of-sample predictions and metric tables are written to `results/modeling/`, which is gitignored like
+    the rest of `results/`.
+
+## Phase 4: era normalization and historical training (model v2)
+
+Reports:
+* [`reports/college_era_analysis.md`](reports/college_era_analysis.md): how college passing changed from 2004 to 2025.
+* [`reports/normalization_ablation.md`](reports/normalization_ablation.md): the normalization strategies compared.
+* [`reports/historical_model_comparison.md`](reports/historical_model_comparison.md): v2 against v1.
+
+```bash
+python -m src.modeling.build_dataset_v2   # FBS reference population, season/conference normalization, targets
+python -m src.modeling.era_report         # outcome-blind era analysis
+python -m src.modeling.train_v2           # embargoed development selection, 2019-2021 holdout, thresholds
+python -m src.modeling.evaluate_v2        # bootstrap intervals, figures, reports
+python -m pytest -q
+```
+
+* **Normalization (`src/modeling/era.py`):** season z-scores, season percentiles and conference-season z-scores
+  against every FBS passer-season with 100+ attempts (not just drafted QBs). The baselines are saved next to the model.
+* **Protocol:**
+  * The normalization strategy, feature level and model family were chosen on embargoed development folds only.
+    Test classes are 2012-2018, and each trains only on classes whose five-season label was observable at that draft.
+  * The 2019-2021 holdout is the same 31 QBs as v1.
+  * Draft position is excluded from every pre-draft model.
+* **Findings:**
+  * Normalization did not help. Every normalized strategy was equal or slightly worse than raw.
+  * Expanding training to 183 QBs from 2005-2021, with truncation-robust raw features, gave holdout Brier 0.121
+    against 0.134 for v1. That is not statistically clear, but it meets the pre-registered preference rule.
+  * v1's "history hurt" result came from its history pool (FCS finals, missing final seasons), not from era drift.
+  * Play types still add nothing detectable.
+* **Models:** `models/qb_career_success/v2.0.0/`. `v1.0.0` is unchanged.
+
+## Phase 5: draft projection, career forecasts, comparisons and trajectories
+
+Start with [`reports/phase5_summary.md`](reports/phase5_summary.md). Details are in:
+* [`draft_model_evaluation.md`](reports/draft_model_evaluation.md)
+* [`career_production_evaluation.md`](reports/career_production_evaluation.md)
+* [`prospect_comparisons.md`](reports/prospect_comparisons.md)
+* [`career_trajectory_evaluation.md`](reports/career_trajectory_evaluation.md)
+
+```bash
+python -m src.modeling.artifacts --check          # verify the gitignored data files the models depend on
+python -m src.modeling.career_trajectory          # one row per drafted QB per NFL season; Kaplan-Meier analysis
+python -m src.modeling.career_production          # five-season stat forecasts, embargoed backtest (~5 min)
+python -m src.modeling.draft_predictor            # verified prospect universe; draft probability, round and pick models
+python -m src.modeling.prospect_similarity        # historical comparison engine
+python -m src.modeling.phase5_report              # summary report + integrated forecast examples
+python -m src.modeling.forecast --name "Fernando Mendoza" --draft-year 2026
+```
+
+`src.modeling.forecast.forecast_prospect(...)` returns one dict per prospect:
+* draft probability, where defined, plus round and pick ranges if drafted;
+* 16/32/64+ start probabilities (v2 and Phase-5 models);
+* five-season and year-by-year passing and rushing projections with 80% intervals;
+* five historical comps.
+
+Each output is tagged with how it was evaluated.
+
+## Phase 5.5: model audit, calibration and the prediction interface
+
+Start with [`reports/phase5_5_audit.md`](reports/phase5_5_audit.md). Details are in:
+* [`draft_eligibility_audit.md`](reports/draft_eligibility_audit.md)
+* [`combine_selection_bias.md`](reports/combine_selection_bias.md)
+* [`calibration_improvements.md`](reports/calibration_improvements.md)
+* [`model_reliability.md`](reports/model_reliability.md)
+* [`frontend_readiness.md`](reports/frontend_readiness.md)
+
+```bash
+python -m src.modeling.artifacts --check            # every pinned model file and external data file
+python -m src.modeling.draft_eligibility            # eligibility classes; population-definition effects
+python -m src.modeling.combine_audit                # Combine participation vs measurement
+python -m src.modeling.round_audit                  # nested round/pick validation; qb_draft v1.1.0
+python -m src.modeling.career_production_v11        # nested production backtest; qb_career_production v1.1.0 (~15 min, 16 cores)
+python -m src.modeling.similarity_audit
+python -m src.modeling.trajectory_audit
+python -m src.modeling.phase5_5_report
+python -m src.modeling.prediction_api --name "Fernando Mendoza" --draft-year 2026 --mode pre_draft
+python -m src.modeling.historical_backtest --name "Josh Allen" --draft-year 2018
+```
+
+`src.modeling.prediction_api.forecast_prospect(name, draft_year, mode='pre_draft' | 'post_draft')` is the interface
+for the future dashboard. It returns a JSON-serialisable dict with player identity, draft projections, nested start
+probabilities, five-season totals with 50/80/90% intervals, year-by-year paths and comps. Each block carries a
+`status`; unsupported predictions return `unavailable` with a reason. `validate(f)` checks the schema.
+
+`models/qb_career_production/v1.0.0/*.joblib` embed player-level career lines. They are kept locally, unchanged,
+and are now gitignored; `v1.1.0` holds parameters only. Its simulation reference tables are a gitignored data file
+listed in its metadata.
+
+## Phase 6A: FastAPI backend
+
+A read-only HTTP API around the existing prediction system, for the future Next.js frontend. Start with
+[`reports/phase6_api_summary.md`](reports/phase6_api_summary.md). Endpoint details are in
+[`api_endpoint_reference.md`](reports/api_endpoint_reference.md) and deployment in
+[`deployment_readiness.md`](reports/deployment_readiness.md).
+
+```bash
+pip install -r requirements-api.txt        # inference-only dependencies (pinned to the training environment)
+python -m api.bundle build                 # once, from the full local data: prediction-ready serving bundle
+python -m api.bundle verify                # SHA-256 of the bundle and of every model file it uses
+python -m api.performance                  # refresh api/static/model_performance.json (aggregates only; tracked)
+uvicorn api.main:app --reload --port 8000  # http://localhost:8000/docs
+python -m pytest -q tests/test_api.py
+```
+
+| Endpoint | Purpose |
+|---|---|
+| `GET /api/health` | status, model integrity (no engine load) |
+| `GET /api/prospects?q=&draft_year=&limit=&offset=` | search / autocomplete |
+| `GET /api/prospects/resolve?name=&draft_year=` | exact name, `409 AMBIGUOUS_PLAYER` when not unique |
+| `GET /api/prospects/{player_id}` | verified college profile, measurements, data coverage |
+| `GET /api/prospects/{player_id}/forecast?mode=pre_draft\|post_draft` | draft projection, nested start probabilities, five-season production with 50/80/90% intervals |
+| `GET /api/prospects/{player_id}/comparisons` | five explanatory historical comps |
+| `GET /api/backtests/{player_id}` | predicted vs actual, labelled out-of-sample / incomplete / in-sample |
+| `GET /api/models`, `GET /api/models/performance` | versions, integrity, curated evaluation and limitations |
+
+The API serves from tracked model files plus the **serving bundle** (`data/serving/v1/`, gitignored player-level
+data). It needs no database, no training data and no CFBD key. Configuration (`FRONTEND_ORIGINS`,
+`RATE_LIMIT_PER_MINUTE`, ...) is documented in `.env.example`.
+
+### Data that is not in Git, and how to get it back
+
+Trained models (`models/**`: joblib files and `metadata.json`) can be committed, except the v1.0.0 production
+files above. Player-level data derived from CFBD or nflverse is never committed (see `.gitignore`). That covers the SQLite database, every parquet file, the
+reference populations and the comparison pool. Each model's `metadata.json` lists the data files it needs under
+`external_data_files`, with a repository-relative path under `data/`, a SHA-256 hash and the command that
+regenerates it. `python -m src.modeling.artifacts --check` verifies them.
+
+To rebuild from scratch:
+1. Run the ingestion pipelines with your own `CFBD_API_KEY` in `.env`: `python -m src.historical_pipeline`, then
+   `python -m src.prospect_pipeline`, then `python -m src.advanced_pipeline`.
+2. Run the modeling commands above, in order.
+
+A regenerated file whose hash differs from the pinned one is reported by `--check`. In that case, retrain into a new
+model version rather than overwriting an existing one. The training scripts refuse to overwrite an existing version
+directory.
+

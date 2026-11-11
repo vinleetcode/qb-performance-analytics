@@ -1,0 +1,126 @@
+{
+  "model_version": "1.0.0",
+  "random_seed": 20261110,
+  "feature_sets": {
+    "pre_draft": [
+      "cmp__raw",
+      "ypa__raw",
+      "td__raw",
+      "int__raw",
+      "att_pg__raw",
+      "rush_pg__raw",
+      "opp_ypa__raw",
+      "sos__raw",
+      "talent_recruiting_4yr_pctile",
+      "age_at_draft",
+      "height_inches"
+    ],
+    "post_draft": [
+      "cmp__raw",
+      "ypa__raw",
+      "td__raw",
+      "int__raw",
+      "att_pg__raw",
+      "rush_pg__raw",
+      "opp_ypa__raw",
+      "sos__raw",
+      "talent_recruiting_4yr_pctile",
+      "age_at_draft",
+      "height_inches",
+      "log_overall_pick"
+    ]
+  },
+  "targets": [
+    "games_played",
+    "games_started",
+    "pass_attempts",
+    "pass_completions",
+    "pass_yards",
+    "pass_tds",
+    "interceptions",
+    "rush_attempts",
+    "rush_yards",
+    "rush_tds"
+  ],
+  "training_draft_classes": [
+    2005,
+    2006,
+    2007,
+    2008,
+    2009,
+    2010,
+    2011,
+    2012,
+    2013,
+    2014,
+    2015,
+    2016,
+    2017,
+    2018,
+    2019,
+    2020,
+    2021
+  ],
+  "training_rows": 183,
+  "backtest": {
+    "test_classes": [
+      2012,
+      2013,
+      2014,
+      2015,
+      2016,
+      2017,
+      2018,
+      2019,
+      2020,
+      2021
+    ],
+    "label_embargo_years": 5
+  },
+  "structured_model": {
+    "meaningful_attempts": 100,
+    "n_sims": 1000,
+    "interval": [
+      0.1,
+      0.9
+    ],
+    "season_cap": 17
+  },
+  "drafting_team": "not used: about 6 QBs per team over 17 seasons cannot support team effects",
+  "artifacts": [
+    "post_draft.joblib",
+    "pre_draft.joblib",
+    "metadata.json"
+  ],
+  "artifact_sha256": {
+    "pre_draft.joblib": "8b9d799b3bb79ea4fe29ac416ae0d20a803ba39cfc8dd24e78b7c05179c0b1a4",
+    "post_draft.joblib": "febf1da327673cef4d18418ccb711ad2d5f86407e44a56d121560338d852b1c4"
+  },
+  "external_data_files": [
+    {
+      "role": "training_paths",
+      "path": "data/model_artifacts/qb_career_production/v1.0.0/training_paths.parquet",
+      "sha256": "af843092f0a65e6b3367640aaef9736165c4e484fbd365e2e1c0be74ed5dd1dd",
+      "regenerate": "python -m src.modeling.career_trajectory",
+      "reason": "player-level nflverse-derived seasons; kept out of Git (the structured model objects also embed training career paths, see report)"
+    }
+  ],
+  "consistency_checks": {
+    "completions_le_attempts": true,
+    "td_nonneg_integer": true,
+    "starts_le_games_played": true,
+    "games_le_cap": true,
+    "zero_opportunity_zero_production": true,
+    "interceptions_le_attempts": true
+  },
+  "package_versions": {
+    "python": "3.14.6",
+    "platform": "Windows-11-10.0.26200-SP0",
+    "numpy": "2.5.2",
+    "pandas": "3.1.0",
+    "scikit-learn": "1.9.1",
+    "scipy": "1.18.1",
+    "joblib": "1.6.0",
+    "matplotlib": "3.11.2"
+  }
+}
