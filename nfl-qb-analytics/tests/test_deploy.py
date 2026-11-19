@@ -209,3 +209,15 @@ def test_bundle_archive_is_gitignored_but_its_pin_is_not():
     r = subprocess.run(['git', 'check-ignore', 'deploy/serving_bundle.sha256', 'api/fetch_bundle.py'],
                        cwd=ROOT, capture_output=True, text=True)
     assert r.stdout.strip() == ''
+
+
+@needs_bundle
+def test_committed_model_files_match_the_bundle_manifest_byte_for_byte():
+    # Render builds from a Linux checkout: line-ending conversion of metadata.json would fail `api.bundle verify`
+    import hashlib
+    m = B.load_manifest()
+    for md, info in m['models'].items():
+        for rel, h in {f'{md}/metadata.json': info['metadata_sha256'],
+                       **{f'{md}/{n}': x for n, x in info['artifact_sha256'].items()}}.items():
+            blob = subprocess.run(['git', 'show', f':nfl-qb-analytics/{rel}'], cwd=ROOT, capture_output=True).stdout
+            assert hashlib.sha256(blob).hexdigest() == h, f'{rel}: bytes in Git differ from the bundle manifest'
