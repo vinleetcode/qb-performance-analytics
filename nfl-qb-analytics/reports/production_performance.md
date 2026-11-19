@@ -80,3 +80,39 @@ image transformations a month, which is far more than six photos at a few widths
 
 **Not measured:** Lighthouse scores and field Core Web Vitals (LCP, CLS, INP). There was no Lighthouse run in this
 session, and field data needs the public URL. Run PageSpeed Insights on the Vercel URL after deployment.
+
+## Live production measurements (2026-11-19, warm instance)
+
+* Measured with `deploy/smoke_test.py` from the development machine against https://qb-forecast-lab.vercel.app and
+  https://qb-forecast-api.onrender.com.
+* Render had just deployed, so the instance was awake and the warm-up had already loaded the engine (`engine_loaded:
+  true` on the first health call).
+
+| Request | Time |
+|---|---|
+| `/api/health` | 292 ms |
+| Search (`q=allen`) | 120 ms |
+| Forecast qb_226 pre-draft, first request (uncached, engine warm) | 597 ms |
+| Forecast qb_226 post-draft, first request | 695 ms |
+| Forecast qb_319 pre-draft, first request | 1,103 ms |
+| Repeat forecasts (cached) | 101-144 ms |
+| Comparisons | 158 ms |
+| Historical backtest | 146 ms |
+| Model performance | 130 ms |
+| Site pages (`/`, `/prospects`, report, backtesting, methodology, case study, credits) | 158-672 ms |
+
+* **Correctness:** forecasts for qb_226 (pre- and post-draft) and qb_319 are identical to the local engine's
+  responses.
+* **Safety and headers:** HTTPS on both services; HSTS, CSP, frame, nosniff and referrer headers present; no localhost
+  in the HTML; docs, bundle and `.env` paths return 404.
+* **Real browser (Playwright, live site):** 14 passed, 2 skipped by design (phone-only tests in the desktop project).
+  Covered:
+  - homepage, search, pre/post-draft switch, comparisons, backtests, methodology
+  - homepage with the backend blocked
+  - photos and no console errors on every page
+  - no horizontal overflow on phones, mobile menu, mobile projection cards
+
+**Not yet measured:**
+* A cold start after the 15-minute idle sleep. To measure it, open the site after 15+ idle minutes, or run the smoke
+  test then: its first health time includes the wake-up.
+* Lighthouse and field Core Web Vitals. Run PageSpeed Insights on the homepage and a report.

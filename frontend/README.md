@@ -160,7 +160,7 @@ A film-room palette, defined as tokens in `src/app/globals.css` on a single dark
 
 ## Deploy (Vercel Hobby, free)
 
-Live URL: _not deployed yet._ Add it here once the Vercel project exists.
+Live URL: https://qb-forecast-lab.vercel.app (Vercel project `qb-forecast-lab`, Hobby; production branch `main`, so pushes deploy automatically).
 
 * **Project settings:**
   - Root Directory `frontend`; Next.js detected; `vercel.json` pins `npm ci` and `npm run build`.

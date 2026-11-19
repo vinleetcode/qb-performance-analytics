@@ -1,5 +1,7 @@
 # QB Forecast Lab
 
+**Live site:** https://qb-forecast-lab.vercel.app · **API:** https://qb-forecast-api.onrender.com/api/health (deployed 2026-11-19, $0: Vercel Hobby + Render Free).
+
 **For recruiters.** An end-to-end machine-learning product that forecasts college quarterbacks' NFL draft outcomes and
 first-five-season careers:
 * a Python data pipeline (CFBD API, nflverse);
@@ -702,7 +704,7 @@ directory.
 
 ## Phase 9: free public deployment (Vercel Hobby + Render Free)
 
-**Live site:** _not deployed yet._ Add the Vercel and Render URLs here after the first deploy.
+**Live site:** https://qb-forecast-lab.vercel.app · **API:** https://qb-forecast-api.onrender.com/api/health (deployed 2026-11-19, $0: Vercel Hobby + Render Free).
 
 The site is prepared for a $0 deployment:
 * the Next.js frontend on Vercel Hobby (`frontend/`)

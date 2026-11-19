@@ -1,7 +1,18 @@
 # Phase 9: free public launch ($0), summary
 
-Date: 2026-11-19. Status: **ready to deploy, not deployed.** There is no public URL yet. Deploying needs account
-sign-ups and a `git push`, which only the owner can do (see `deployment_readiness.md`, "Phase 9").
+Date: 2026-11-19. Status: **live.**
+
+* Site: https://qb-forecast-lab.vercel.app
+* API: https://qb-forecast-api.onrender.com/api/health
+* Total cost: $0
+* Public smoke test: 50/50 checks passed
+* Live forecasts are byte-identical to the local engine
+* Browser flows pass on desktop and a Pixel 7 (see `production_performance.md`)
+
+Launch fix found during deployment: `core.autocrlf` had stored the model `metadata.json` files with LF line endings,
+so the Linux build failed `api.bundle verify` (the manifest pins the CRLF bytes). `.gitattributes` now stores
+`nfl-qb-analytics/models/**` byte-exact; the change is line endings only (zero content change). A regression test
+checks that the committed bytes match the manifest.
 
 ## Hosting ($0 total)
 
