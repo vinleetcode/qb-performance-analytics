@@ -257,6 +257,18 @@ def test_rate_limit(monkeypatch):
     assert codes[:3] == [200] * 3 and codes[3] == 429
 
 
+def test_rate_limited_responses_keep_cors_headers(monkeypatch):
+    # a 429 without CORS headers reaches browser code as an opaque network error instead of RATE_LIMITED
+    app = _app_with_env(monkeypatch, RATE_LIMIT_PER_MINUTE='1', FRONTEND_ORIGINS='https://qb.example.com')
+    with TestClient(app) as c:
+        h = {'Origin': 'https://qb.example.com'}
+        first, limited = (c.get('/api/models/performance', headers=h) for _ in range(2))
+    assert first.status_code == 200 and limited.status_code == 429
+    assert limited.headers.get('access-control-allow-origin') == 'https://qb.example.com'
+    assert limited.json()['error']['code'] == E.RATE_LIMITED
+    assert limited.headers.get('X-Request-ID')
+
+
 def test_internal_errors_hide_details(client, monkeypatch):
     from api.main import app
 

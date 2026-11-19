@@ -1,0 +1,176 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+/*
+ * Film-room palette. One dark theme (the product is dark by default and only dark).
+ *   field   #0F1A2B  page background (deep field navy)
+ *   panel   #15233A  panels and tables
+ *   raised  #1C2D48  hover, popovers
+ *   line    #2A3E5E  rules and borders
+ *   chalk   #E9E5DB  primary text
+ *   slate   #A3AEC0  secondary text (7:1 on field)
+ * Data colours, validated with the dataviz palette checker against #0F1A2B (lightness band, chroma,
+ * colour-blind separation, contrast):
+ *   projection #4C8BD1  model forecasts and their uncertainty bands
+ *   observed   #BF8530  what actually happened
+ *   reference  #7F8BA0  historical baselines (neutral, never a series colour)
+ * Status colours are reserved and always ship with an icon and a text label.
+ */
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-body);
+  --font-heading: var(--font-display);
+  --font-display: var(--font-display);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --color-panel: var(--panel);
+  --color-raised: var(--raised);
+  --color-line: var(--line);
+  --color-chalk: var(--chalk);
+  --color-slate-text: var(--slate-text);
+  --color-projection: var(--projection);
+  --color-projection-text: var(--projection-text);
+  --color-observed: var(--observed);
+  --color-observed-text: var(--observed-text);
+  --color-reference: var(--reference);
+  --color-caution: var(--caution);
+  --color-good: var(--good);
+  --radius-sm: 3px;
+  --radius-md: 5px;
+  --radius-lg: 7px;
+  --radius-xl: 10px;
+  --radius-2xl: 14px;
+  --radius-3xl: 18px;
+  --radius-4xl: 22px;
+}
+
+:root {
+  --field: #0f1a2b;
+  --panel: #15233a;
+  --raised: #1c2d48;
+  --line: #2a3e5e;
+  --chalk: #e9e5db;
+  --slate-text: #a3aec0;
+  --projection: #4c8bd1;
+  --projection-text: #86b3e6;
+  /* interval bands: projection blue mixed into the panel at 25 / 45 / 75%, solid so the scale never shows through */
+  --projection-90: #233d60;
+  --projection-80: #2e527e;
+  --projection-50: #3e71ab;
+  --observed: #bf8530;
+  --observed-text: #e0ad62;
+  --reference: #7f8ba0;
+  --caution: #e2c35b;
+  --good: #7fbf8f;
+
+  --background: var(--field);
+  --foreground: var(--chalk);
+  --card: var(--panel);
+  --card-foreground: var(--chalk);
+  --popover: var(--raised);
+  --popover-foreground: var(--chalk);
+  --primary: var(--chalk);
+  --primary-foreground: var(--field);
+  --secondary: var(--raised);
+  --secondary-foreground: var(--chalk);
+  --muted: var(--panel);
+  --muted-foreground: var(--slate-text);
+  --accent: var(--raised);
+  --accent-foreground: var(--chalk);
+  --destructive: #e8836f;
+  --border: var(--line);
+  --input: var(--line);
+  --ring: var(--projection-text);
+  --radius: 7px;
+  color-scheme: dark;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/60;
+  }
+  html {
+    @apply font-sans;
+    font-size: 15px;
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "tnum" 1, "lnum" 1;
+    line-height: 1.6;
+  }
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-display);
+    font-weight: 600;
+    line-height: 1.1;
+    letter-spacing: 0.005em;
+    text-wrap: balance;
+  }
+  p {
+    text-wrap: pretty;
+  }
+  a {
+    text-underline-offset: 3px;
+  }
+  /* links inside running text are underlined, never distinguished by colour alone */
+  p a,
+  li > p a,
+  td a {
+    text-decoration-line: underline;
+    text-decoration-thickness: 1px;
+  }
+  :focus-visible {
+    outline: 2px solid var(--projection-text);
+    outline-offset: 2px;
+  }
+}
+
+@layer utilities {
+  .num {
+    font-family: var(--font-display);
+    font-variant-numeric: tabular-nums lining-nums;
+  }
+  .measure {
+    max-width: 68ch;
+  }
+  /* yard-line texture used only on the field ruler track: a quiet scale, not decoration */
+  .ruler-track {
+    background-image: repeating-linear-gradient(
+      to right,
+      rgb(233 229 219 / 0.14) 0 1px,
+      transparent 1px 10%
+    );
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

@@ -35,6 +35,8 @@ class Settings:
     cache_size: int = field(default_factory=lambda: _int('QB_API_CACHE_SIZE', 512, 0, 100000))
     max_page_size: int = field(default_factory=lambda: _int('QB_API_MAX_PAGE_SIZE', 50, 1, 200))
     docs_enabled: bool = field(default_factory=lambda: os.environ.get('QB_API_DOCS_ENABLED', 'true').lower() != 'false')
+    # load the bundle and forecasting engine in a background thread at startup (set by the Dockerfile; off in tests)
+    warmup: bool = field(default_factory=lambda: os.environ.get('QB_API_WARMUP', 'false').lower() == 'true')
     log_level: str = field(default_factory=lambda: os.environ.get('LOG_LEVEL', 'INFO').upper())
     environment: str = field(default_factory=_env('APP_ENV', 'development'))
 

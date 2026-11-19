@@ -1,0 +1,38 @@
+# Render Blueprint for the QB Forecast Lab API on Render's FREE plan (no payment method needed for the free instance).
+# Free web services: 512 MB RAM, 0.1 CPU, spin down after 15 minutes without inbound traffic, ~1 minute to spin up,
+# 750 instance hours per workspace per month, no persistent disk, ephemeral filesystem.
+#
+# Before the first deploy (see nfl-qb-analytics/reports/deployment_readiness.md, "Free deployment"):
+#   1. Upload dist/qb_serving_bundle_v1.tar.gz to a PRIVATE GitHub repository and create a fine-grained token with
+#      read-only Contents access to that one repository.
+#   2. After the Blueprint creates the service, add a Secret File named `qb_bundle_token` containing that token
+#      (Dashboard > service > Environment > Secret Files), then trigger a deploy.
+services:
+  - type: web
+    name: qb-forecast-api
+    runtime: docker
+    plan: free
+    dockerfilePath: ./nfl-qb-analytics/Dockerfile
+    dockerContext: ./nfl-qb-analytics
+    healthCheckPath: /api/health
+    autoDeploy: false
+    envVars:
+      # exact Vercel production origin, e.g. https://<project>.vercel.app (comma-separated; never *)
+      - key: FRONTEND_ORIGINS
+        sync: false
+      # https://api.github.com/repos/<owner>/<private-repo>/contents/qb_serving_bundle_v1.tar.gz
+      - key: QB_BUNDLE_URL
+        sync: false
+      - key: FORWARDED_ALLOW_IPS
+        value: "*"
+      - key: RATE_LIMIT_PER_MINUTE
+        value: "120"
+      # the frontend never requests more than 20 per page; a small cap slows bulk enumeration (CFBD terms, Sec. 5)
+      - key: QB_API_MAX_PAGE_SIZE
+        value: "20"
+      - key: QB_API_DOCS_ENABLED
+        value: "false"
+      - key: APP_ENV
+        value: production
+      - key: LOG_LEVEL
+        value: INFO

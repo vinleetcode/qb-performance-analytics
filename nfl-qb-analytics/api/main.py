@@ -13,6 +13,7 @@ import threading
 import time
 import uuid
 from collections import defaultdict, deque
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
@@ -57,10 +58,32 @@ class RateLimiter:
             return True
 
 
+def _warm_up() -> None:
+    """Load the verified bundle and the engine once, off the request path. Requests that arrive meanwhile wait on the
+    service's load lock instead of starting a second load. A failure leaves the service degraded, exactly as a lazy
+    load would, and /api/health reports it."""
+    from api.dependencies import get_service
+    t = time.perf_counter()
+    try:
+        svc = get_service()
+        svc.engine()
+        svc._prospects_gsis()
+        log.info('warm-up finished in %.1fs', time.perf_counter() - t)
+    except Exception as exc:                      # noqa: BLE001 - logged server-side; health shows degraded
+        log.error('warm-up failed: %s', type(exc).__name__)
+
+
+@asynccontextmanager
+async def lifespan(_: FastAPI):
+    if get_settings().warmup:
+        threading.Thread(target=_warm_up, name='qb-warmup', daemon=True).start()
+    yield
+
+
 def create_app() -> FastAPI:
     s = get_settings()
     logging.basicConfig(level=s.log_level, format='%(asctime)s %(levelname)s %(name)s %(message)s')
-    app = FastAPI(title='QB Performance Analytics API', version=API_VERSION,
+    app = FastAPI(title='QB Performance Analytics API', version=API_VERSION, lifespan=lifespan,
                   description='Read-only predictions for college QBs: NFL draft projection, NFL start probabilities, '
                               'five-season production with intervals, historical comparisons and labelled backtests.',
                   docs_url='/docs' if s.docs_enabled else None, redoc_url=None,
@@ -68,8 +91,6 @@ def create_app() -> FastAPI:
     origins = [o for o in s.frontend_origins if o != '*']
     if len(origins) != len(s.frontend_origins):
         log.warning('ignoring wildcard CORS origin; set FRONTEND_ORIGINS to an explicit allowlist')
-    app.add_middleware(CORSMiddleware, allow_origins=origins, allow_credentials=False, allow_methods=['GET'],
-                       allow_headers=['Accept', 'Content-Type'], max_age=600)
     limiter = RateLimiter(s.rate_limit_per_minute)
 
     @app.middleware('http')
@@ -87,6 +108,11 @@ def create_app() -> FastAPI:
                                          else 'public, max-age=300')
         log.info('%s %s %s %d %.0fms', rid, request.method, request.url.path, resp.status_code, 1000 * (time.perf_counter() - t))
         return resp
+
+    # registered after the guard so it is the OUTERMOST middleware: responses the guard short-circuits (429) still carry
+    # CORS headers, otherwise browsers report a rate limit as a network failure
+    app.add_middleware(CORSMiddleware, allow_origins=origins, allow_credentials=False, allow_methods=['GET'],
+                       allow_headers=['Accept', 'Content-Type'], max_age=600)
 
     @app.exception_handler(E.APIError)
     async def api_error(_: Request, exc: E.APIError):

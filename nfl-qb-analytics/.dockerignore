@@ -8,16 +8,13 @@ venv
 **/__pycache__
 .pytest_cache
 results/
-dist/
 reports/
 tests/
-data/*
-!data/serving/
-!data/model_artifacts/
-data/model_artifacts/*
-!data/model_artifacts/qb_career_production/
-data/model_artifacts/qb_career_production/*
-!data/model_artifacts/qb_career_production/v1.1.0/
-!data/model_artifacts/qb_similarity/
+# all local data: the serving bundle enters only as the verified archive (dist/ locally, or QB_BUNDLE_URL)
+data/
+dist/*
+!dist/qb_serving_bundle_v1.tar.gz
 models/qb_career_production/v1.0.0/
 models/qb_career_success/v1.0.0/
+# Render copies secret files into the build context root; they are read only through the BuildKit secret mount
+qb_bundle_token

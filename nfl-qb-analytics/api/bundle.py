@@ -22,6 +22,7 @@ import copy
 import hashlib
 import json
 import tarfile
+import threading
 import time
 from datetime import datetime, timezone
 from pathlib import Path
@@ -40,6 +41,9 @@ SEASONS = 'college_seasons.parquet'
 BACKTESTS = 'backtests.json'
 DETAILS = 'details.json'
 MANIFEST = 'manifest.json'
+# fast-load copy of PROFILES, written by `optimize` after `verify` (deployment build step; never shipped in the archive)
+FAST_PROFILES = 'profiles.fast.pkl'
+FAST_META = 'profiles.fast.json'
 # existing gitignored model data files the engine reads, shipped at their own repo-relative paths
 MODEL_DATA_FILES = ['data/model_artifacts/qb_career_production/v1.1.0/reference_tables.npz',
                     'data/model_artifacts/qb_similarity/v1.0.0/pool.parquet']
@@ -274,6 +278,56 @@ def install(archive: Path, root: Path = ROOT) -> list[str]:
     return names
 
 
+# ------------------------------------------------------------------ fast profile loading
+# joblib reads profiles.joblib with its pure-Python unpickler (thousands of small pandas objects): about 10 s of CPU,
+# which is minutes on a 0.1-CPU free host. `optimize` re-saves the SAME objects, after `verify`, with the standard
+# C-accelerated pickle; `load_serving` uses that copy only when its recorded source hash equals the manifest hash of
+# profiles.joblib and its own hash matches, otherwise it falls back to joblib. Both files come from the verified
+# bundle (never from a request), so this adds no new deserialization source.
+def _profiles_sha_in_manifest(bundle_dir: Path) -> str | None:
+    return load_manifest(bundle_dir)['files'].get(f'data/serving/v{BUNDLE_VERSION}/{PROFILES}')
+
+
+def optimize(bundle_dir: Path = BUNDLE_DIR) -> dict:
+    import pickle
+    src_sha = sha256(bundle_dir / PROFILES)
+    if src_sha != _profiles_sha_in_manifest(bundle_dir):
+        raise ValueError(f'{PROFILES} does not match the bundle manifest; run verify first')
+    s = joblib.load(bundle_dir / PROFILES)
+    with open(bundle_dir / FAST_PROFILES, 'wb') as f:
+        pickle.dump(s, f, protocol=5)
+    meta = {'source': PROFILES, 'source_sha256': src_sha, 'sha256': sha256(bundle_dir / FAST_PROFILES)}
+    (bundle_dir / FAST_META).write_text(json.dumps(meta, indent=2), encoding='utf-8')
+    return meta
+
+
+_serving_cache: dict = {}
+_serving_lock = threading.Lock()
+
+
+def load_serving(bundle_dir: Path = BUNDLE_DIR) -> dict:
+    """The profiles payload, loaded once per process and shared (the GSIS lookup and the engine both use it)."""
+    key = str(Path(bundle_dir).resolve())
+    with _serving_lock:
+        return _serving_cache[key] if key in _serving_cache else _load_serving(bundle_dir, key)
+
+
+def _load_serving(bundle_dir: Path, key: str) -> dict:
+    s = None
+    fast, meta_p = bundle_dir / FAST_PROFILES, bundle_dir / FAST_META
+    if fast.exists() and meta_p.exists():
+        try:
+            meta = json.loads(meta_p.read_text(encoding='utf-8'))
+            if meta.get('source_sha256') == _profiles_sha_in_manifest(bundle_dir) and sha256(fast) == meta.get('sha256'):
+                import pickle
+                with open(fast, 'rb') as f:
+                    s = pickle.load(f)
+        except (OSError, ValueError, KeyError):
+            s = None
+    _serving_cache[key] = s if s is not None else joblib.load(bundle_dir / PROFILES)
+    return _serving_cache[key]
+
+
 # ------------------------------------------------------------------ serving source (same interface as forecast.Engine)
 class BundleSource:
     """Profiles from the bundle; draft-probability and v2 models from the tracked model files."""
@@ -281,7 +335,7 @@ class BundleSource:
     def __init__(self, bundle_dir: Path = BUNDLE_DIR):
         from src.modeling import draft_predictor as DP
         from src.modeling import train_v2 as T2
-        s = joblib.load(bundle_dir / PROFILES)
+        s = load_serving(bundle_dir)
         self.profiles = s['profiles']
         self._src = {'prospects': s['prospects_gsis']}
         self.combine_seasons = s['combine_seasons']
@@ -315,7 +369,7 @@ class BundleSource:
 
 if __name__ == '__main__':
     ap = argparse.ArgumentParser()
-    ap.add_argument('command', choices=['build', 'verify', 'pack', 'install'])
+    ap.add_argument('command', choices=['build', 'verify', 'pack', 'install', 'optimize'])
     ap.add_argument('archive', nargs='?')
     a = ap.parse_args()
     if a.command == 'build':
@@ -329,5 +383,7 @@ if __name__ == '__main__':
         raise SystemExit(1 if bad else 0)
     elif a.command == 'pack':
         print(pack())
+    elif a.command == 'optimize':
+        print(json.dumps(optimize(), indent=2))
     else:
         print('\n'.join(install(Path(a.archive))))

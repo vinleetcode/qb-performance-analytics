@@ -1,3 +1,24 @@
+# QB Forecast Lab
+
+**For recruiters.** An end-to-end machine-learning product that forecasts college quarterbacks' NFL draft outcomes and
+first-five-season careers:
+* a Python data pipeline (CFBD API, nflverse);
+* scikit-learn models evaluated with nested chronological backtests and calibrated prediction intervals;
+* a typed FastAPI service;
+* a Next.js/TypeScript site ([`../frontend`](../frontend)) with accessible charts and licensed photography.
+
+The emphasis is honest evaluation: every forecast is checked against real careers, unsupported predictions are withheld,
+and limitations are stated. Start with the [case study](reports/portfolio_case_study.md).
+
+| Home | Scouting report | Backtest |
+|---|---|---|
+| ![Home](../frontend/docs/screenshots/landing.png) | ![Report](../frontend/docs/screenshots/report-production.png) | ![Backtest](../frontend/docs/screenshots/backtest.png) |
+
+Run it locally: `uvicorn api.main:app --port 8000` in this folder, then `npm run dev` in `../frontend` (details under
+Phase 6B below).
+
+---
+
 # NFL Quarterback Analytics — Portfolio Project
 
 An end-to-end, statistically grounded NFL player analytics starter. Designed for data science and applied statistics internship portfolios.
@@ -639,6 +660,27 @@ The API serves from tracked model files plus the **serving bundle** (`data/servi
 data). It needs no database, no training data and no CFBD key. Configuration (`FRONTEND_ORIGINS`,
 `RATE_LIMIT_PER_MINUTE`, ...) is documented in `.env.example`.
 
+## Phase 6B: interactive scouting dashboard (`../frontend`)
+
+A Next.js 16 + TypeScript site on top of the API: search, prospect scouting reports (draft projection, starting chances,
+five-season production with 50/80/90% ranges, comparisons, warnings), honest historical backtests and a methodology page.
+All of its numbers come from the API. Start with
+[`reports/phase6_frontend_summary.md`](reports/phase6_frontend_summary.md); the frontend's own guide is
+[`../frontend/README.md`](../frontend/README.md).
+
+```bash
+uvicorn api.main:app --reload --port 8000      # terminal 1, from nfl-qb-analytics/
+cd ../frontend && cp .env.example .env.local   # terminal 2: NEXT_PUBLIC_API_BASE_URL=http://localhost:8000
+npm install && npm run dev                     # http://localhost:3000
+```
+
+| Report | Backtest |
+|---|---|
+| ![Prospect report](../frontend/docs/screenshots/report-production.png) | ![Backtest](../frontend/docs/screenshots/backtest.png) |
+
+Screenshots are real renders of the production build against the live API. They show real players' model output, so
+they fall under the same data-licensing review as the serving bundle before publication.
+
 ### Data that is not in Git, and how to get it back
 
 Trained models (`models/**`: joblib files and `metadata.json`) can be committed, except the v1.0.0 production
@@ -656,3 +698,29 @@ A regenerated file whose hash differs from the pinned one is reported by `--chec
 model version rather than overwriting an existing one. The training scripts refuse to overwrite an existing version
 directory.
 
+
+
+## Phase 9: free public deployment (Vercel Hobby + Render Free)
+
+**Live site:** _not deployed yet._ Add the Vercel and Render URLs here after the first deploy.
+
+The site is prepared for a $0 deployment:
+* the Next.js frontend on Vercel Hobby (`frontend/`)
+* the FastAPI backend as a Render Free Docker web service (`render.yaml` at the repo root, `plan: free`)
+* the gitignored serving bundle fetched at image build from a private GitHub repository, with a read-only token held
+  as a Render secret file. It is checked against `deploy/serving_bundle.sha256` and verified file by file.
+
+Cold-start work changed no output (tested byte for byte):
+* the profiles file is loaded once, not twice
+* a hash-checked fast-load copy of it is made at build time
+* BLAS runs single-threaded
+* a background warm-up loads the engine at boot
+
+Locally, the first forecast went from 22.9 s to 11.8 s, committed memory from 1.27 GB to 263 MB, and the first forecast
+after warm-up takes 163 ms.
+
+* Runbook: `reports/deployment_readiness.md` (Phase 9)
+* Measurements: `reports/production_performance.md`
+* Licensing: `reports/public_data_licensing_review.md`
+* Summary and security review: `reports/phase9_launch_summary.md`
+* Smoke test once deployed: `python deploy/smoke_test.py --site <vercel url> --api <render url>`

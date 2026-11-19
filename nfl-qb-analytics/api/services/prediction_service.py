@@ -206,8 +206,7 @@ class PredictionService:
 
     def _prospects_gsis(self) -> dict:
         if not hasattr(self, '_gsis'):
-            import joblib
-            g = joblib.load(self.bundle_dir / B.PROFILES)['prospects_gsis']
+            g = B.load_serving(self.bundle_dir)['prospects_gsis']      # shared with the engine: loaded once per process
             self._gsis = {int(i): (str(v) if pd.notna(v) else None) for i, v in zip(g['id'], g['gsis_id'])}
         return self._gsis
 
